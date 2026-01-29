@@ -400,42 +400,6 @@
         .zip-bar-bg { width: 100%; height: 10px; background: #000; margin: 20px 0; }
         .zip-bar-fill { height: 100%; background: var(--primary-cyan); width: 0%; transition: width 0.3s; }
 
-        /* Download Method Selector */
-        .method-selector {
-            margin: 15px 0;
-            text-align: left;
-        }
-        
-        .method-option {
-            display: flex;
-            align-items: center;
-            margin: 8px 0;
-            padding: 8px;
-            border: 1px solid var(--dark-cyan);
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .method-option:hover {
-            border-color: var(--primary-cyan);
-            background: rgba(0, 255, 255, 0.05);
-        }
-        
-        .method-option input {
-            margin-right: 10px;
-        }
-        
-        .method-label {
-            flex: 1;
-        }
-        
-        .method-desc {
-            font-size: 11px;
-            color: var(--text-secondary);
-            opacity: 0.8;
-        }
-
         @media(max-width: 900px) { .main-content { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -468,7 +432,7 @@
                     <div style="text-align:center; color:var(--text-secondary); padding:30px; opacity:0.5;">NO DATA</div>
                 </div>
                 <button class="download-zip-btn" id="downloadZipBtn">
-                    <i class="fas fa-file-archive"></i> DOWNLOAD SELECTED
+                    <i class="fas fa-file-archive"></i> ZIP SELECTED
                     <small id="selectedCountBadge">(0)</small>
                 </button>
             </section>
@@ -561,61 +525,31 @@
     <!-- ZIP PROGRESS OVERLAY -->
     <div class="zip-overlay" id="zipOverlay">
         <div class="zip-box">
-            <h2 style="font-family:'Orbitron'; color:var(--primary-cyan); margin-bottom:15px;">DOWNLOAD MANAGER</h2>
-            
-            <div class="method-selector">
-                <div class="method-option" onclick="selectMethod('server')">
-                    <input type="radio" id="methodServer" name="downloadMethod" checked>
-                    <div class="method-label">
-                        <strong>SERVER-SIDE DOWNLOAD</strong>
-                        <div class="method-desc">Direct download from original server (fastest)</div>
-                    </div>
-                </div>
-                
-                <div class="method-option" onclick="selectMethod('proxy')">
-                    <input type="radio" id="methodProxy" name="downloadMethod">
-                    <div class="method-label">
-                        <strong>PROXY DOWNLOAD</strong>
-                        <div class="method-desc">Use CORS proxy (works with restrictions)</div>
-                    </div>
-                </div>
-                
-                <div class="method-option" onclick="selectMethod('list')">
-                    <input type="radio" id="methodList" name="downloadMethod">
-                    <div class="method-label">
-                        <strong>DOWNLOAD LIST</strong>
-                        <div class="method-desc">Generate download links list (manual download)</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="zipStatusText">Select files and choose download method...</div>
+            <h2 style="font-family:'Orbitron'; color:var(--primary-cyan); margin-bottom:15px;">CREATING ARCHIVE</h2>
+            <div id="zipStatusText">Organizing folders...</div>
             <div class="zip-bar-bg">
                 <div class="zip-bar-fill" id="zipProgressBar"></div>
             </div>
             <div id="zipSpeedInfo" style="margin-top:10px; font-size:12px; color:var(--text-secondary);"></div>
-            
-            <div id="downloadLinks" style="margin-top:15px; text-align:left; max-height:200px; overflow-y:auto; display:none;">
-                <!-- Download links will appear here -->
-            </div>
-            
-            <div style="margin-top:20px;">
-                <button class="cyber-btn" onclick="startDownload()" id="startDownloadBtn" style="background:rgba(0,255,0,0.1); border-color:#0f0; color:#0f0;">
-                    <i class="fas fa-download"></i> START DOWNLOAD
-                </button>
-                <button class="cyber-btn" onclick="closeZipOverlay()" style="margin-left:10px;">CANCEL</button>
-            </div>
         </div>
     </div>
 
     <script>
+        // --- PARTICLES ---
+        const cyberBg = document.getElementById('cyberBg');
+        for(let i=0; i<40; i++) {
+            const p = document.createElement('div'); p.className='particle';
+            p.style.left = Math.random()*100+'%'; p.style.animationDelay = Math.random()*20+'s';
+            cyberBg.appendChild(p);
+        }
+
         // --- STATE ---
         let playlist = [];
         let selectedUids = new Set();
         let currentIndex = -1;
         let currentMediaItem = null;
         let isSelectAll = false;
-        let currentDownloadMethod = 'server'; // 'server', 'proxy', 'list'
+        let currentYouTubePlayer = null;
 
         // --- DOM ---
         const screens = {
@@ -637,162 +571,507 @@
         const audioPath = document.getElementById('audioPath');
         const mp3ActionBtn = document.getElementById('mp3ActionBtn');
 
-        // --- UTILITY FUNCTIONS ---
-        function cleanFileName(filename) {
-            if (!filename) return 'track.mp3';
-            
-            let clean = filename;
-            
-            // Décoder les URL encodées
-            try {
-                clean = decodeURIComponent(clean);
-            } catch (e) {
-                // Nettoyage manuel
-                clean = clean.replace(/%20/g, ' ')
-                             .replace(/%28/g, '(')
-                             .replace(/%29/g, ')')
-                             .replace(/%2C/g, ',')
-                             .replace(/%27/g, "'")
-                             .replace(/%2D/g, '-');
-            }
-            
-            // Extraire juste le nom du fichier
-            const lastSlash = clean.lastIndexOf('/');
-            if (lastSlash !== -1) {
-                clean = clean.substring(lastSlash + 1);
-            }
-            
-            // Supprimer les paramètres
-            const queryIndex = clean.indexOf('?');
-            if (queryIndex !== -1) {
-                clean = clean.substring(0, queryIndex);
-            }
-            
-            // Nettoyer les caractères
-            clean = clean.replace(/[<>:"|?*]/g, '_')
-                         .replace(/\\/g, '-')
-                         .replace(/\//g, '-')
-                         .replace(/\.\./g, '.')
-                         .replace(/^\s+|\s+$/g, '')
-                         .replace(/\s+/g, ' ');
-            
-            // Assurer l'extension .mp3
-            if (!clean.toLowerCase().endsWith('.mp3')) {
-                const dotIndex = clean.lastIndexOf('.');
-                if (dotIndex !== -1) {
-                    clean = clean.substring(0, dotIndex) + '.mp3';
-                } else {
-                    clean += '.mp3';
-                }
-            }
-            
-            // Nom générique si vide
-            if (clean.length === 0 || clean.length > 100) {
-                const timestamp = Date.now().toString(36);
-                clean = `track_${timestamp}.mp3`;
-            }
-            
-            return clean;
-        }
-
-        function cleanDisplayName(name) {
-            if (!name) return 'Unknown Track';
-            
-            let clean = name;
-            try {
-                clean = decodeURIComponent(clean);
-            } catch (e) {
-                clean = clean.replace(/%20/g, ' ')
-                             .replace(/%28/g, '(')
-                             .replace(/%29/g, ')')
-                             .replace(/%2C/g, ',')
-                             .replace(/%27/g, "'");
-            }
-            
-            const lastSlash = clean.lastIndexOf('/');
-            if (lastSlash !== -1) {
-                clean = clean.substring(lastSlash + 1);
-            }
-            
-            clean = clean.replace(/\.mp3$/i, '');
-            return clean;
-        }
-
-        // --- DOWNLOAD METHOD SELECTION ---
-        function selectMethod(method) {
-            currentDownloadMethod = method;
-            
-            // Mettre à jour les radios
-            document.getElementById('methodServer').checked = method === 'server';
-            document.getElementById('methodProxy').checked = method === 'proxy';
-            document.getElementById('methodList').checked = method === 'list';
-            
-            // Mettre à jour le texte
-            const statusText = document.getElementById('zipStatusText');
-            const downloadLinks = document.getElementById('downloadLinks');
-            
-            if (method === 'list') {
-                statusText.textContent = "Will generate download links list";
-                downloadLinks.style.display = 'block';
-            } else {
-                statusText.textContent = `Ready for ${method} download`;
-                downloadLinks.style.display = 'none';
-            }
-        }
-
-        // --- DOWNLOAD MANAGER ---
-        class DownloadManager {
+        // --- YOUTUBE PLAYER INTELLIGENT (GitHub Pages compatible) ---
+        class SmartYouTubePlayer {
             constructor() {
+                this.currentMethod = null;
+                this.currentVideoId = null;
+                this.availableMethods = [
+                    'githubMethod',     // Méthode optimisée pour GitHub Pages
+                    'invidiousMethod',  // Invidious (toujours fonctionnel)
+                    'pipedMethod',      // Piped (alternative)
+                    'liteMethod',       // YouTube Lite
+                    'embedMethod'       // Embedding classique
+                ];
+                this.methodAttempts = 0;
+                this.maxAttempts = 3;
+            }
+
+            // Méthode 1: Optimisé pour GitHub Pages
+            githubMethod(videoId, autoplay = false) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        ytPlayerContainer.innerHTML = '';
+                        
+                        // Utiliser un iframe avec des paramètres spécifiques pour GitHub
+                        const iframe = document.createElement('iframe');
+                        iframe.id = 'ytGithubPlayer';
+                        iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=${autoplay ? 1 : 0}&playsinline=1`;
+                        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+                        iframe.setAttribute('allowfullscreen', '');
+                        iframe.style.width = '100%';
+                        iframe.style.height = '100%';
+                        iframe.style.border = 'none';
+                        
+                        ytPlayerContainer.appendChild(iframe);
+                        
+                        // GitHub Pages a souvent moins de restrictions
+                        setTimeout(() => {
+                            ytPlaceholder.style.display = 'none';
+                            this.currentMethod = 'github';
+                            resolve(true);
+                        }, 1500);
+                        
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+            }
+
+            // Méthode 2: Invidious (open source, fiable)
+            invidiousMethod(videoId, autoplay = false) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        ytPlayerContainer.innerHTML = '';
+                        
+                        const iframe = document.createElement('iframe');
+                        iframe.id = 'ytInvidiousPlayer';
+                        
+                        // Instances Invidious fiables
+                        const instances = [
+                            `https://invidious.nerdvpn.de/embed/${videoId}`,
+                            `https://y.com.sb/embed/${videoId}`,
+                            `https://inv.odyssey346.dev/embed/${videoId}`,
+                            `https://invidious.flokinet.to/embed/${videoId}`
+                        ];
+                        
+                        iframe.src = `${instances[0]}?autoplay=${autoplay ? 1 : 0}`;
+                        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+                        iframe.setAttribute('allowfullscreen', '');
+                        iframe.style.width = '100%';
+                        iframe.style.height = '100%';
+                        iframe.style.border = 'none';
+                        
+                        ytPlayerContainer.appendChild(iframe);
+                        
+                        iframe.onload = () => {
+                            setTimeout(() => {
+                                ytPlaceholder.style.display = 'none';
+                                this.currentMethod = 'invidious';
+                                resolve(true);
+                            }, 1000);
+                        };
+                        
+                        iframe.onerror = () => {
+                            // Essayer une autre instance
+                            for (let i = 1; i < instances.length; i++) {
+                                setTimeout(() => {
+                                    iframe.src = `${instances[i]}?autoplay=${autoplay ? 1 : 0}`;
+                                }, i * 1000);
+                            }
+                            setTimeout(() => reject(new Error('All invidious instances failed')), 5000);
+                        };
+                        
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+            }
+
+            // Méthode 3: YouTube Lite (lightweight)
+            liteMethod(videoId, autoplay = false) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        ytPlayerContainer.innerHTML = '';
+                        
+                        // YouTube Lite Player
+                        const litePlayer = document.createElement('div');
+                        litePlayer.innerHTML = `
+                            <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#000;">
+                                <div style="margin-bottom:20px; text-align:center;">
+                                    <i class="fab fa-youtube" style="font-size:48px; color:#ff0000;"></i>
+                                    <div style="margin-top:10px; font-size:14px; color:#fff;">YouTube Lite Player</div>
+                                </div>
+                                <div style="width:90%; max-width:560px;">
+                                    <iframe 
+                                        src="https://www.youtube.com/embed/${videoId}?rel=0&autoplay=${autoplay ? 1 : 0}&controls=1&modestbranding=1"
+                                        style="width:100%; height:315px; border:none; border-radius:8px;"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowfullscreen>
+                                    </iframe>
+                                </div>
+                                <div style="margin-top:20px; font-size:12px; color:#888;">
+                                    Using lightweight embed method
+                                </div>
+                            </div>
+                        `;
+                        
+                        ytPlayerContainer.appendChild(litePlayer);
+                        
+                        setTimeout(() => {
+                            ytPlaceholder.style.display = 'none';
+                            this.currentMethod = 'lite';
+                            resolve(true);
+                        }, 2000);
+                        
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+            }
+
+            // Méthode 4: Piped (alternative)
+            pipedMethod(videoId, autoplay = false) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        ytPlayerContainer.innerHTML = '';
+                        
+                        const iframe = document.createElement('iframe');
+                        iframe.id = 'ytPipedPlayer';
+                        iframe.src = `https://piped.video/embed/${videoId}?autoplay=${autoplay ? 1 : 0}`;
+                        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+                        iframe.setAttribute('allowfullscreen', '');
+                        iframe.style.width = '100%';
+                        iframe.style.height = '100%';
+                        iframe.style.border = 'none';
+                        
+                        ytPlayerContainer.appendChild(iframe);
+                        
+                        setTimeout(() => {
+                            ytPlaceholder.style.display = 'none';
+                            this.currentMethod = 'piped';
+                            resolve(true);
+                        }, 1500);
+                        
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+            }
+
+            // Méthode 5: Embedding classique avec retry
+            embedMethod(videoId, autoplay = false) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        ytPlayerContainer.innerHTML = '';
+                        
+                        const iframe = document.createElement('iframe');
+                        iframe.id = 'ytEmbedPlayer';
+                        
+                        // Différentes configurations d'embedding
+                        const embedConfigs = [
+                            `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=${autoplay ? 1 : 0}`,
+                            `https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&autoplay=${autoplay ? 1 : 0}`,
+                            `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&autoplay=${autoplay ? 1 : 0}`
+                        ];
+                        
+                        iframe.src = embedConfigs[0];
+                        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+                        iframe.setAttribute('allowfullscreen', '');
+                        iframe.style.width = '100%';
+                        iframe.style.height = '100%';
+                        iframe.style.border = 'none';
+                        
+                        ytPlayerContainer.appendChild(iframe);
+                        
+                        let configIndex = 0;
+                        
+                        const checkPlayer = () => {
+                            setTimeout(() => {
+                                try {
+                                    // Vérifier si le player fonctionne
+                                    if (iframe.contentWindow && iframe.contentWindow.location.href.includes('youtube')) {
+                                        ytPlaceholder.style.display = 'none';
+                                        this.currentMethod = 'embed';
+                                        resolve(true);
+                                    } else if (configIndex < embedConfigs.length - 1) {
+                                        // Essayer une autre configuration
+                                        configIndex++;
+                                        iframe.src = embedConfigs[configIndex];
+                                        checkPlayer();
+                                    } else {
+                                        reject(new Error('All embed configs failed'));
+                                    }
+                                } catch (e) {
+                                    if (configIndex < embedConfigs.length - 1) {
+                                        configIndex++;
+                                        iframe.src = embedConfigs[configIndex];
+                                        checkPlayer();
+                                    } else {
+                                        reject(e);
+                                    }
+                                }
+                            }, 2000);
+                        };
+                        
+                        checkPlayer();
+                        
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+            }
+
+            // Jouer une vidéo avec méthode intelligente
+            async playVideo(videoId, autoplay = false) {
+                this.currentVideoId = videoId;
+                this.methodAttempts = 0;
+                
+                // Afficher le loading
+                ytPlaceholder.style.display = 'flex';
+                ytPlaceholder.innerHTML = `
+                    <i class="fab fa-youtube"></i><br>
+                    INITIALIZING PLAYER...<br>
+                    <div style="margin-top:10px; font-size:12px; opacity:0.7;">
+                        GitHub Pages optimized
+                    </div>
+                `;
+                
+                // Essayer les méthodes dans l'ordre
+                for (const method of this.availableMethods) {
+                    this.methodAttempts++;
+                    
+                    try {
+                        ytPlaceholder.innerHTML = `
+                            <i class="fab fa-youtube"></i><br>
+                            TRYING METHOD ${this.methodAttempts}/5...<br>
+                            <div style="margin-top:10px; font-size:12px; opacity:0.7;">
+                                ${method.replace('Method', '').toUpperCase()}
+                            </div>
+                        `;
+                        
+                        await this[method](videoId, autoplay);
+                        
+                        // Succès
+                        statusIndicator.textContent = autoplay ? "PLAYING" : "READY";
+                        const playBtnIcon = document.querySelector('#playPauseBtn i');
+                        playBtnIcon.className = autoplay ? 'fas fa-pause' : 'fas fa-play';
+                        
+                        console.log(`YouTube player loaded successfully with method: ${method}`);
+                        return true;
+                        
+                    } catch (error) {
+                        console.warn(`Method ${method} failed:`, error);
+                        continue;
+                    }
+                }
+                
+                // Toutes les méthodes ont échoué
+                this.showFallback(videoId);
+                return false;
+            }
+
+            // Fallback avec lien direct
+            showFallback(videoId) {
+                ytPlayerContainer.innerHTML = '';
+                ytPlaceholder.style.display = 'flex';
+                ytPlaceholder.innerHTML = `
+                    <div style="text-align:center; padding:20px;">
+                        <i class="fab fa-youtube" style="font-size:60px; color:#ff0000; margin-bottom:20px;"></i>
+                        <div style="font-size:16px; margin-bottom:10px; color:var(--primary-cyan);">DIRECT PLAYER</div>
+                        <div style="font-size:13px; margin-bottom:20px; opacity:0.8;">
+                            Using alternative player method
+                        </div>
+                        <div style="width:100%; max-width:560px; margin:0 auto;">
+                            <iframe 
+                                src="https://www.youtube-nocookie.com/embed/${videoId}"
+                                style="width:100%; height:315px; border:none; border-radius:8px;"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                        <div style="margin-top:20px; font-size:12px; opacity:0.7;">
+                            If player doesn't work, 
+                            <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" style="color:var(--primary-cyan);">
+                                click here to watch on YouTube
+                            </a>
+                        </div>
+                    </div>
+                `;
+                statusIndicator.textContent = "ALTERNATIVE PLAYER";
+            }
+
+            // Arrêter le player
+            stop() {
+                ytPlayerContainer.innerHTML = '';
+                ytPlaceholder.style.display = 'flex';
+                ytPlaceholder.innerHTML = `<i class="fab fa-youtube"></i><br>READY TO PLAY`;
+                this.currentMethod = null;
+            }
+        }
+
+        // Créer le player intelligent
+        const youtubePlayer = new SmartYouTubePlayer();
+
+        // --- ZIP GENERATOR AVEC NETTOYAGE DES %20 ---
+        class CleanZipGenerator {
+            constructor() {
+                this.maxWorkers = 8; // 8 connexions parallèles pour GitHub Pages
                 this.progress = 0;
                 this.totalFiles = 0;
                 this.processedFiles = 0;
+                this.startTime = null;
                 this.successCount = 0;
                 this.failedCount = 0;
-                this.startTime = null;
-                this.downloadQueue = [];
-                this.isDownloading = false;
             }
 
-            // Méthode 1: Téléchargement direct depuis le serveur
-            async downloadDirect(url) {
-                try {
-                    // Créer un lien caché et le cliquer
-                    return new Promise((resolve, reject) => {
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = '';
-                        link.style.display = 'none';
-                        document.body.appendChild(link);
-                        
-                        // Essayer de déclencher le téléchargement
-                        setTimeout(() => {
-                            try {
-                                link.click();
-                                resolve(true);
-                            } catch (e) {
-                                reject(e);
-                            } finally {
-                                document.body.removeChild(link);
-                            }
-                        }, 100);
-                    });
-                } catch (error) {
-                    throw error;
+            // Nettoyer les noms de fichiers (enlever %20 et autres encodages)
+            cleanFileName(filename) {
+                if (!filename) return 'unknown.mp3';
+                
+                // Décoder les URL encodées
+                let clean = decodeURIComponent(filename);
+                
+                // Remplacer les espaces et caractères spéciaux
+                clean = clean.replace(/%20/g, ' ')
+                             .replace(/%2C/g, ',')
+                             .replace(/%2F/g, '-')
+                             .replace(/%3A/g, '-')
+                             .replace(/%5B/g, '(')
+                             .replace(/%5D/g, ')')
+                             .replace(/%26/g, '&')
+                             .replace(/%3F/g, '');
+                
+                // Nettoyer les caractères invalides pour les noms de fichiers
+                clean = clean.replace(/[<>:"|?*]/g, '_')
+                             .replace(/\\/g, '-')
+                             .replace(/\//g, '-')
+                             .replace(/\.\./g, '.');
+                
+                // S'assurer que l'extension est .mp3
+                if (!clean.toLowerCase().endsWith('.mp3')) {
+                    clean += '.mp3';
                 }
+                
+                // Limiter la longueur
+                if (clean.length > 100) {
+                    const parts = clean.split('.');
+                    const ext = parts.pop();
+                    const name = parts.join('.').substring(0, 60);
+                    clean = `${name}...${ext}`;
+                }
+                
+                return clean;
             }
 
-            // Méthode 2: Utiliser un proxy
-            async downloadWithProxy(url) {
+            // Nettoyer le chemin complet
+            cleanPath(path) {
+                if (!path) return 'downloads/';
+                
+                // Décoder le chemin
+                let cleanPath = decodeURIComponent(path);
+                
+                // Remplacer les %20 par des espaces
+                cleanPath = cleanPath.replace(/%20/g, ' ');
+                
+                // Nettoyer chaque segment du chemin
+                const segments = cleanPath.split('/');
+                const cleanedSegments = segments.map(segment => {
+                    if (!segment) return '';
+                    return this.cleanFileName(segment);
+                });
+                
+                // Reconstruire le chemin
+                cleanPath = cleanedSegments.filter(s => s).join('/');
+                
+                // S'assurer qu'il commence par "Music/" pour l'organisation
+                if (!cleanPath.toLowerCase().startsWith('music/')) {
+                    cleanPath = 'Music/' + cleanPath;
+                }
+                
+                return cleanPath;
+            }
+
+            async createZip(items) {
+                this.startTime = Date.now();
+                const audioItems = items.filter(item => item.type === 'audio');
+                this.totalFiles = audioItems.length;
+                this.processedFiles = 0;
+                this.successCount = 0;
+                this.failedCount = 0;
+                
+                if (this.totalFiles === 0) {
+                    return null;
+                }
+
+                const zip = new JSZip();
+                
+                // Télécharger en parallèle par lots
+                const chunkSize = Math.max(1, Math.ceil(audioItems.length / this.maxWorkers));
+                const chunks = this.chunkArray(audioItems, chunkSize);
+                
+                const downloadPromises = chunks.map((chunk, index) => 
+                    this.downloadChunk(chunk, index)
+                );
+                
+                const results = await Promise.allSettled(downloadPromises);
+                
+                // Ajouter les fichiers réussis au ZIP
+                for (const result of results) {
+                    if (result.status === 'fulfilled') {
+                        const downloadedFiles = result.value;
+                        for (const [path, blob] of Object.entries(downloadedFiles)) {
+                            if (blob && blob.size > 1024) { // Au moins 1KB
+                                zip.file(path, blob);
+                                this.successCount++;
+                            } else {
+                                this.failedCount++;
+                            }
+                        }
+                    }
+                }
+
+                return zip;
+            }
+
+            chunkArray(array, size) {
+                const chunks = [];
+                for (let i = 0; i < array.length; i += size) {
+                    chunks.push(array.slice(i, i + size));
+                }
+                return chunks;
+            }
+
+            async downloadChunk(chunk, chunkIndex) {
+                const results = {};
+                
+                for (const item of chunk) {
+                    try {
+                        const blob = await this.downloadFile(item.url);
+                        if (blob && blob.size > 1024) {
+                            // Nettoyer le nom de fichier et le chemin
+                            const cleanName = this.cleanFileName(item.name);
+                            const cleanPath = this.cleanPath(item.path);
+                            
+                            // Créer le chemin final
+                            let finalPath = cleanPath;
+                            if (finalPath.endsWith('/')) {
+                                finalPath += cleanName;
+                            } else if (!finalPath.includes('.')) {
+                                finalPath += '/' + cleanName;
+                            }
+                            
+                            results[finalPath] = blob;
+                        }
+                    } catch (e) {
+                        console.warn(`Failed to download ${item.name}:`, e.message);
+                        this.failedCount++;
+                    } finally {
+                        this.processedFiles++;
+                        this.updateProgress();
+                    }
+                }
+                
+                return results;
+            }
+
+            async downloadFile(url) {
+                // Proxies pour contourner CORS (GitHub Pages compatible)
                 const proxies = [
-                    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-                    `https://corsproxy.io/?${encodeURIComponent(url)}`,
-                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+                    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+                    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+                    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+                    u => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(u)}`
                 ];
 
-                for (const proxyUrl of proxies) {
+                for (const proxy of proxies) {
                     try {
+                        const proxyUrl = proxy(url);
                         const response = await fetch(proxyUrl, {
-                            signal: AbortSignal.timeout(10000)
+                            signal: AbortSignal.timeout(15000), // 15 secondes timeout
+                            headers: {
+                                'User-Agent': 'Beatstreet-Downloader/1.0'
+                            }
                         });
                         
                         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -802,92 +1081,11 @@
                             return blob;
                         }
                     } catch (e) {
-                        continue;
+                        continue; // Essayer le proxy suivant
                     }
                 }
                 
-                throw new Error("All proxies failed");
-            }
-
-            // Méthode 3: Générer des liens de téléchargement
-            generateDownloadLink(url, filename) {
-                return {
-                    url: url,
-                    filename: filename,
-                    link: `<a href="${url}" download="${filename}" target="_blank">${filename}</a>`
-                };
-            }
-
-            // Téléchargement en batch
-            async downloadBatch(items, method) {
-                this.startTime = Date.now();
-                this.totalFiles = items.length;
-                this.processedFiles = 0;
-                this.successCount = 0;
-                this.failedCount = 0;
-                this.isDownloading = true;
-
-                const results = {
-                    success: [],
-                    failed: [],
-                    links: []
-                };
-
-                if (method === 'list') {
-                    // Générer seulement la liste de liens
-                    for (const item of items) {
-                        const cleanName = cleanFileName(item.name);
-                        const link = this.generateDownloadLink(item.url, cleanName);
-                        results.links.push(link);
-                        this.processedFiles++;
-                        this.updateProgress();
-                    }
-                    return results;
-                }
-
-                // Téléchargements réels
-                for (const item of items) {
-                    try {
-                        const cleanName = cleanFileName(item.name);
-                        
-                        if (method === 'server') {
-                            await this.downloadDirect(item.url);
-                            results.success.push({ name: cleanName, url: item.url });
-                            this.successCount++;
-                        } else if (method === 'proxy') {
-                            const blob = await this.downloadWithProxy(item.url);
-                            if (blob) {
-                                // Créer un lien pour télécharger le blob
-                                const link = document.createElement('a');
-                                link.href = URL.createObjectURL(blob);
-                                link.download = cleanName;
-                                link.style.display = 'none';
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                                
-                                // Libérer la mémoire
-                                setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-                                
-                                results.success.push({ name: cleanName, url: item.url });
-                                this.successCount++;
-                            }
-                        }
-                    } catch (error) {
-                        console.warn(`Failed to download ${item.name}:`, error);
-                        results.failed.push({ name: item.name, error: error.message });
-                        this.failedCount++;
-                    } finally {
-                        this.processedFiles++;
-                        this.updateProgress();
-                        
-                        // Petite pause pour éviter de surcharger
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                    }
-                }
-
-                this.isDownloading = false;
-                return results;
+                throw new Error("All download methods failed");
             }
 
             updateProgress() {
@@ -899,14 +1097,14 @@
                 
                 if (progressBar) progressBar.style.width = this.progress + '%';
                 if (statusText) {
-                    statusText.textContent = `Processed ${this.processedFiles}/${this.totalFiles} files`;
+                    statusText.textContent = `Processed ${this.processedFiles}/${this.totalFiles} files (${this.successCount}成功, ${this.failedCount}失败)`;
                 }
                 
                 if (this.startTime && speedInfo) {
                     const elapsed = (Date.now() - this.startTime) / 1000;
                     if (elapsed > 0) {
                         const speed = this.processedFiles / elapsed;
-                        speedInfo.textContent = `Speed: ${speed.toFixed(1)} files/sec | Success: ${this.successCount}`;
+                        speedInfo.textContent = `速度: ${speed.toFixed(1)} 文件/秒 | 成功: ${this.successCount}`;
                     }
                 }
             }
@@ -915,208 +1113,6 @@
                 return this.progress;
             }
         }
-
-        // --- ZIP OVERLAY FUNCTIONS ---
-        function openZipOverlay() {
-            if (selectedUids.size === 0) {
-                alert("Please select songs first by checking the boxes.");
-                return;
-            }
-            
-            const selectedItems = playlist.filter(item => selectedUids.has(item.uid));
-            const audioItems = selectedItems.filter(item => item.type === 'audio');
-            
-            if (audioItems.length === 0) {
-                alert("No audio files selected for download.");
-                return;
-            }
-
-            // Réinitialiser l'interface
-            document.getElementById('zipProgressBar').style.width = '0%';
-            document.getElementById('zipStatusText').textContent = `Ready to download ${audioItems.length} files`;
-            document.getElementById('zipSpeedInfo').textContent = `Selected: ${audioItems.length} files | Choose method`;
-            document.getElementById('downloadLinks').innerHTML = '';
-            document.getElementById('downloadLinks').style.display = 'none';
-            
-            // Afficher l'overlay
-            document.getElementById('zipOverlay').style.display = 'flex';
-        }
-
-        function closeZipOverlay() {
-            document.getElementById('zipOverlay').style.display = 'none';
-        }
-
-        async function startDownload() {
-            const selectedItems = playlist.filter(item => selectedUids.has(item.uid));
-            const audioItems = selectedItems.filter(item => item.type === 'audio');
-            
-            const downloadManager = new DownloadManager();
-            const startDownloadBtn = document.getElementById('startDownloadBtn');
-            const downloadLinks = document.getElementById('downloadLinks');
-            
-            // Désactiver le bouton pendant le téléchargement
-            startDownloadBtn.disabled = true;
-            startDownloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> DOWNLOADING...';
-            
-            try {
-                const results = await downloadManager.downloadBatch(audioItems, currentDownloadMethod);
-                
-                if (currentDownloadMethod === 'list') {
-                    // Afficher les liens
-                    let linksHTML = '<h4>DOWNLOAD LINKS:</h4>';
-                    results.links.forEach((link, index) => {
-                        linksHTML += `
-                            <div style="margin: 5px 0; padding: 8px; border: 1px solid var(--dark-cyan); border-radius: 3px;">
-                                <strong>${index + 1}.</strong> ${link.filename}<br>
-                                <a href="${link.url}" download="${link.filename}" target="_blank" 
-                                   style="color: var(--primary-cyan); font-size: 11px;">
-                                   <i class="fas fa-download"></i> Download
-                                </a> |
-                                <a href="${link.url}" target="_blank" 
-                                   style="color: var(--accent-blue); font-size: 11px;">
-                                   <i class="fas fa-external-link-alt"></i> Open
-                                </a>
-                            </div>
-                        `;
-                    });
-                    
-                    downloadLinks.innerHTML = linksHTML;
-                    downloadLinks.style.display = 'block';
-                    
-                    // Ajouter un bouton pour tout télécharger
-                    const bulkHTML = `
-                        <div style="margin-top: 15px; padding: 10px; background: rgba(0,255,255,0.1); border-radius: 5px;">
-                            <strong>BULK DOWNLOAD:</strong><br>
-                            <div style="font-size: 11px; margin: 5px 0;">
-                                Copy all links and use a download manager like <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" style="color: var(--primary-cyan);">yt-dlp</a>:
-                            </div>
-                            <textarea id="bulkLinks" style="width: 100%; height: 60px; background: #000; color: var(--primary-cyan); border: 1px solid var(--dark-cyan); padding: 5px; font-size: 10px; font-family: monospace; margin: 5px 0;">${results.links.map(l => l.url).join('\n')}</textarea>
-                            <button onclick="copyBulkLinks()" style="background: var(--primary-cyan); color: #000; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 11px;">
-                                <i class="fas fa-copy"></i> Copy Links
-                            </button>
-                        </div>
-                    `;
-                    
-                    downloadLinks.innerHTML += bulkHTML;
-                    
-                    document.getElementById('zipStatusText').textContent = `Generated ${results.links.length} download links`;
-                    
-                } else {
-                    // Téléchargement direct ou proxy
-                    const elapsed = (Date.now() - downloadManager.startTime) / 1000;
-                    const speed = downloadManager.successCount / elapsed;
-                    
-                    document.getElementById('zipSpeedInfo').textContent = 
-                        `Completed in ${elapsed.toFixed(1)}s | Speed: ${speed.toFixed(1)} files/sec | Success: ${downloadManager.successCount}/${audioItems.length}`;
-                    
-                    if (downloadManager.successCount > 0) {
-                        document.getElementById('zipStatusText').textContent = 
-                            `✅ Successfully downloaded ${downloadManager.successCount} files!`;
-                        
-                        // Afficher les échecs
-                        if (downloadManager.failedCount > 0) {
-                            setTimeout(() => {
-                                alert(`Download complete!\n\nSuccess: ${downloadManager.successCount} files\nFailed: ${downloadManager.failedCount} files\n\nFailed files may require manual download.`);
-                            }, 1000);
-                        }
-                    } else {
-                        document.getElementById('zipStatusText').textContent = 
-                            `❌ Download failed. Try another method or download manually.`;
-                    }
-                }
-                
-            } catch (error) {
-                console.error("Download error:", error);
-                document.getElementById('zipStatusText').textContent = `Error: ${error.message}`;
-            } finally {
-                // Réactiver le bouton
-                startDownloadBtn.disabled = false;
-                startDownloadBtn.innerHTML = '<i class="fas fa-download"></i> START DOWNLOAD';
-            }
-        }
-
-        function copyBulkLinks() {
-            const textarea = document.getElementById('bulkLinks');
-            textarea.select();
-            textarea.setSelectionRange(0, 99999); // Pour mobile
-            document.execCommand('copy');
-            
-            // Feedback visuel
-            const originalText = textarea.placeholder;
-            textarea.placeholder = "Links copied to clipboard!";
-            setTimeout(() => {
-                textarea.placeholder = originalText;
-            }, 2000);
-        }
-
-        // --- YOUTUBE PLAYER SIMPLE ---
-        class SimpleYouTubePlayer {
-            async playVideo(videoId, autoplay = false) {
-                ytPlaceholder.style.display = 'flex';
-                ytPlaceholder.innerHTML = `<i class="fab fa-youtube"></i><br>LOADING...`;
-                
-                try {
-                    ytPlayerContainer.innerHTML = '';
-                    
-                    const iframe = document.createElement('iframe');
-                    iframe.id = 'ytPlayer';
-                    iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=${autoplay ? 1 : 0}`;
-                    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-                    iframe.setAttribute('allowfullscreen', '');
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    iframe.style.border = 'none';
-                    
-                    ytPlayerContainer.appendChild(iframe);
-                    
-                    // Attendre le chargement
-                    await new Promise((resolve) => {
-                        iframe.onload = () => {
-                            setTimeout(() => {
-                                ytPlaceholder.style.display = 'none';
-                                resolve();
-                            }, 500);
-                        };
-                        setTimeout(resolve, 3000);
-                    });
-                    
-                    statusIndicator.textContent = autoplay ? "PLAYING" : "READY";
-                    const playBtnIcon = document.querySelector('#playPauseBtn i');
-                    playBtnIcon.className = autoplay ? 'fas fa-pause' : 'fas fa-play';
-                    
-                    return true;
-                    
-                } catch (error) {
-                    this.showFallback(videoId);
-                    return false;
-                }
-            }
-
-            showFallback(videoId) {
-                ytPlayerContainer.innerHTML = '';
-                ytPlaceholder.style.display = 'flex';
-                ytPlaceholder.innerHTML = `
-                    <div style="text-align:center;">
-                        <i class="fab fa-youtube" style="font-size:48px; color:#ff0000;"></i>
-                        <div style="margin:15px 0;">
-                            <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" 
-                               style="color:var(--primary-cyan); text-decoration:none; padding:10px 20px; border:2px solid var(--primary-cyan); border-radius:5px; display:inline-block;">
-                               <i class="fas fa-external-link-alt"></i> WATCH ON YOUTUBE
-                            </a>
-                        </div>
-                    </div>
-                `;
-                statusIndicator.textContent = "EMBEDDING DISABLED";
-            }
-
-            stop() {
-                ytPlayerContainer.innerHTML = '';
-                ytPlaceholder.style.display = 'flex';
-                ytPlaceholder.innerHTML = `<i class="fab fa-youtube"></i><br>READY TO PLAY`;
-            }
-        }
-
-        const youtubePlayer = new SimpleYouTubePlayer();
 
         // --- PLAYBACK LOGIC ---
         function switchScreen(type) {
@@ -1146,6 +1142,7 @@
                 if(id) {
                     youtubePlayer.playVideo(id, false);
                     
+                    // Mettre à jour le bouton MP3
                     mp3ActionBtn.onclick = () => {
                         window.open(`https://youtubemultidownloader.org/en/?url=${encodeURIComponent(currentMediaItem.url)}`, '_blank');
                     };
@@ -1159,10 +1156,9 @@
                 switchScreen('audio');
                 audioEl.src = currentMediaItem.url;
                 audioEl.play();
-                audioTitle.textContent = cleanDisplayName(currentMediaItem.name);
-                
+                audioTitle.textContent = decodeURIComponent(currentMediaItem.name); // Décoder le nom
                 if(currentMediaItem.path) {
-                    audioPath.textContent = cleanDisplayName(currentMediaItem.path);
+                    audioPath.textContent = decodeURIComponent(currentMediaItem.path); // Décoder le chemin
                 } else {
                     audioPath.textContent = "/";
                 }
@@ -1180,15 +1176,16 @@
             if (url.includes('youtube.com') || url.includes('youtu.be')) {
                 const videoId = extractYTId(url);
                 if (videoId) {
-                    const displayName = cleanDisplayName(url.split('/').pop() || `YouTube: ${videoId}`);
-                    addToPlaylist(url, displayName, 'youtube', 'YouTube Root');
+                    // Décoder le nom pour l'affichage
+                    const decodedName = decodeURIComponent(url.split('/').pop() || `YouTube: ${videoId}`);
+                    addToPlaylist(url, decodedName, 'youtube', 'YouTube Root');
                     playMedia(playlist.length - 1);
                 } else {
                     alert("Invalid YouTube URL");
                 }
-            } else if (url.toLowerCase().endsWith('.mp3')) {
-                const displayName = cleanDisplayName(url.split('/').pop());
-                addToPlaylist(url, displayName, 'audio', '/');
+            } else if (url.endsWith('.mp3')) {
+                const decodedName = decodeURIComponent(url.split('/').pop());
+                addToPlaylist(url, decodedName, 'audio', '/');
                 playMedia(playlist.length - 1);
             } else {
                 document.getElementById('scanInput').value = url;
@@ -1196,7 +1193,7 @@
             }
         });
 
-        // --- CONTROLS ---
+        // --- CONTROLS (PLAY/PAUSE) ---
         const playBtn = document.getElementById('playPauseBtn');
         playBtn.addEventListener('click', () => {
             const icon = playBtn.querySelector('i');
@@ -1332,7 +1329,7 @@
 
                 let pathDisplay = '';
                 if (item.path && item.path !== '/' && item.path !== 'YouTube Root') {
-                    const parts = cleanDisplayName(item.path).split('/').filter(p => p);
+                    const parts = decodeURIComponent(item.path).split('/').filter(p => p);
                     pathDisplay = parts.join(' <i class="fas fa-chevron-right" style="font-size:8px; margin:0 2px;"></i> ');
                 }
 
@@ -1340,7 +1337,7 @@
                     <div class="cyber-check ${isSelected ? 'checked' : ''}" onclick="toggleSelection('${item.uid}')"></div>
                     <div class="track-info-wrapper">
                         <div class="track-path">${pathDisplay}</div>
-                        <div class="track-name">${icon} ${cleanDisplayName(item.name)}</div>
+                        <div class="track-name">${icon} ${decodeURIComponent(item.name)}</div>
                     </div>
                     <div class="delete-btn" onclick="deleteTrack('${item.uid}', event)">
                         <i class="fas fa-times"></i>
@@ -1360,8 +1357,74 @@
             selectedCountBadge.textContent = `(${selectedUids.size})`;
         }
 
-        // --- MODIFIER LE BOUTON ZIP POUR OUVRIR L'OVERLAY ---
-        document.getElementById('downloadZipBtn').addEventListener('click', openZipOverlay);
+        // --- ZIP AVEC NETTOYAGE ---
+        document.getElementById('downloadZipBtn').addEventListener('click', async () => {
+            if(selectedUids.size === 0) {
+                alert("Please select songs first by checking the boxes.");
+                return;
+            }
+            
+            const selectedItems = playlist.filter(item => selectedUids.has(item.uid));
+            const audioItems = selectedItems.filter(item => item.type === 'audio');
+            
+            if(audioItems.length === 0) {
+                alert("No audio files selected for download.");
+                return;
+            }
+
+            const zipOverlay = document.getElementById('zipOverlay');
+            const progressBar = document.getElementById('zipProgressBar');
+            const statusText = document.getElementById('zipStatusText');
+            const speedInfo = document.getElementById('zipSpeedInfo');
+
+            zipOverlay.style.display = 'flex';
+            progressBar.style.width = '0%';
+            statusText.textContent = `Starting download of ${audioItems.length} files...`;
+            speedInfo.textContent = "";
+
+            try {
+                const zipGenerator = new CleanZipGenerator();
+                const zip = await zipGenerator.createZip(selectedItems);
+                
+                if (!zip || zipGenerator.successCount === 0) {
+                    throw new Error(`Download failed. Success: ${zipGenerator.successCount}/${audioItems.length}`);
+                }
+
+                progressBar.style.width = '100%';
+                statusText.textContent = "Creating final ZIP archive...";
+                
+                const content = await zip.generateAsync({
+                    type: "blob",
+                    compression: "DEFLATE",
+                    compressionOptions: { level: 1 }
+                });
+                
+                const elapsed = (Date.now() - zipGenerator.startTime) / 1000;
+                const speed = zipGenerator.successCount / elapsed;
+                
+                speedInfo.textContent = `Completed in ${elapsed.toFixed(1)}s | Speed: ${speed.toFixed(1)} files/sec | Cleaned filenames`;
+                
+                // Télécharger
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `Beatstreet_Clean_${Date.now()}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                setTimeout(() => {
+                    alert(`✓ Successfully downloaded ${zipGenerator.successCount} files!\n• Time: ${elapsed.toFixed(1)} seconds\n• Speed: ${speed.toFixed(1)} files/sec\n• Filenames cleaned (no %20)`);
+                    zipOverlay.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }, 500);
+                
+            } catch(e) {
+                console.error("ZIP creation error:", e);
+                alert("Error: " + e.message);
+                zipOverlay.style.display = 'none';
+                progressBar.style.width = '0%';
+            }
+        });
 
         function extractYTId(url) {
             try {
@@ -1369,31 +1432,46 @@
                     /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i,
                     /youtube\.com\/watch\?v=([^&]{11})/,
                     /youtu\.be\/([^?]{11})/,
-                    /youtube\.com\/embed\/([^?]{11})/
+                    /youtube\.com\/embed\/([^?]{11})/,
+                    /youtube\.com\/v\/([^?]{11})/
                 ];
                 
                 for (const pattern of patterns) {
                     const match = url.match(pattern);
-                    if (match && match[1]) {
+                    if (match && match[1] && match[1].length === 11) {
                         return match[1];
                     }
                 }
                 
                 return null;
             } catch(e) {
+                console.error("Error extracting YouTube ID:", e);
                 return null;
             }
         }
 
-        // --- SCANNER ---
+        // Initialisation
+        window.addEventListener('DOMContentLoaded', () => {
+            // URL d'exemple
+            urlInput.value = 'https://www.youtube.com/watch?v=2_JyKGP5QLQ';
+            statusIndicator.textContent = "READY | GitHub Pages";
+        });
+
+        // Exposer les fonctions globales
+        window.openScanner = openScanner;
+        window.closeScanner = closeScanner;
+        window.toggleSelection = toggleSelection;
+        window.deleteTrack = deleteTrack;
+
+        // Scanner functions
         function openScanner() { 
             document.getElementById('scannerOverlay').style.display = 'flex'; 
         }
-        
         function closeScanner() { 
             document.getElementById('scannerOverlay').style.display = 'none'; 
         }
 
+        // Scanner logic
         const PROXIES = [
             (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
             (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
@@ -1454,7 +1532,7 @@
                 if(relativePath.startsWith('/')) relativePath = relativePath.substring(1);
 
                 const depthClass = depth < 2 ? 'depth-1' : '';
-                l(`[DEPTH ${depth}] ${cleanDisplayName(relativePath.replace(/\/$/, ''))}`, depthClass);
+                l(`[DEPTH ${depth}] ${decodeURIComponent(relativePath.replace(/\/$/, ''))}`, depthClass);
 
                 try {
                     const html = await fetchContent(url);
@@ -1475,8 +1553,8 @@
                             if(!absUrl.includes(rootUrlObj.origin)) return;
 
                             if(absUrl.toLowerCase().endsWith('.mp3')) {
-                                const fileName = cleanDisplayName(absUrl.split('/').pop());
-                                const filePath = cleanDisplayName(absUrl.replace(rootUrlObj.origin, ''));
+                                const fileName = decodeURIComponent(absUrl.split('/').pop());
+                                const filePath = decodeURIComponent(absUrl.replace(rootUrlObj.origin, '')); 
                                 
                                 addToPlaylist(absUrl, fileName, 'audio', filePath);
                                 l(`  → FOUND: ${fileName}`, 'found');
@@ -1504,27 +1582,6 @@
         document.getElementById('stopScanBtn').addEventListener('click', () => {
             isScanning = false;
         });
-
-        // Initialisation
-        window.addEventListener('DOMContentLoaded', () => {
-            urlInput.value = 'https://www.youtube.com/watch?v=2_JyKGP5QLQ';
-            statusIndicator.textContent = "READY";
-            
-            // Sélectionner la méthode par défaut
-            selectMethod('server');
-        });
-
-        // Exposer les fonctions globales
-        window.openScanner = openScanner;
-        window.closeScanner = closeScanner;
-        window.toggleSelection = toggleSelection;
-        window.deleteTrack = deleteTrack;
-        window.selectMethod = selectMethod;
-        window.startDownload = startDownload;
-        window.closeZipOverlay = closeZipOverlay;
-        window.copyBulkLinks = copyBulkLinks;
-        window.openZipOverlay = openZipOverlay;
     </script>
 </body>
 </html>
-
