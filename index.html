@@ -571,332 +571,104 @@
         const audioPath = document.getElementById('audioPath');
         const mp3ActionBtn = document.getElementById('mp3ActionBtn');
 
-        // --- YOUTUBE PLAYER INTELLIGENT (GitHub Pages compatible) ---
-        class SmartYouTubePlayer {
+        // --- YOUTUBE PLAYER SIMPLE QUI FONCTIONNE ---
+        class SimpleYouTubePlayer {
             constructor() {
-                this.currentMethod = null;
                 this.currentVideoId = null;
-                this.availableMethods = [
-                    'githubMethod',     // Méthode optimisée pour GitHub Pages
-                    'invidiousMethod',  // Invidious (toujours fonctionnel)
-                    'pipedMethod',      // Piped (alternative)
-                    'liteMethod',       // YouTube Lite
-                    'embedMethod'       // Embedding classique
-                ];
-                this.methodAttempts = 0;
-                this.maxAttempts = 3;
             }
 
-            // Méthode 1: Optimisé pour GitHub Pages
-            githubMethod(videoId, autoplay = false) {
-                return new Promise((resolve, reject) => {
-                    try {
-                        ytPlayerContainer.innerHTML = '';
-                        
-                        // Utiliser un iframe avec des paramètres spécifiques pour GitHub
-                        const iframe = document.createElement('iframe');
-                        iframe.id = 'ytGithubPlayer';
-                        iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=${autoplay ? 1 : 0}&playsinline=1`;
-                        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-                        iframe.setAttribute('allowfullscreen', '');
-                        iframe.style.width = '100%';
-                        iframe.style.height = '100%';
-                        iframe.style.border = 'none';
-                        
-                        ytPlayerContainer.appendChild(iframe);
-                        
-                        // GitHub Pages a souvent moins de restrictions
-                        setTimeout(() => {
-                            ytPlaceholder.style.display = 'none';
-                            this.currentMethod = 'github';
-                            resolve(true);
-                        }, 1500);
-                        
-                    } catch (error) {
-                        reject(error);
-                    }
-                });
-            }
-
-            // Méthode 2: Invidious (open source, fiable)
-            invidiousMethod(videoId, autoplay = false) {
-                return new Promise((resolve, reject) => {
-                    try {
-                        ytPlayerContainer.innerHTML = '';
-                        
-                        const iframe = document.createElement('iframe');
-                        iframe.id = 'ytInvidiousPlayer';
-                        
-                        // Instances Invidious fiables
-                        const instances = [
-                            `https://invidious.nerdvpn.de/embed/${videoId}`,
-                            `https://y.com.sb/embed/${videoId}`,
-                            `https://inv.odyssey346.dev/embed/${videoId}`,
-                            `https://invidious.flokinet.to/embed/${videoId}`
-                        ];
-                        
-                        iframe.src = `${instances[0]}?autoplay=${autoplay ? 1 : 0}`;
-                        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-                        iframe.setAttribute('allowfullscreen', '');
-                        iframe.style.width = '100%';
-                        iframe.style.height = '100%';
-                        iframe.style.border = 'none';
-                        
-                        ytPlayerContainer.appendChild(iframe);
-                        
-                        iframe.onload = () => {
-                            setTimeout(() => {
-                                ytPlaceholder.style.display = 'none';
-                                this.currentMethod = 'invidious';
-                                resolve(true);
-                            }, 1000);
-                        };
-                        
-                        iframe.onerror = () => {
-                            // Essayer une autre instance
-                            for (let i = 1; i < instances.length; i++) {
-                                setTimeout(() => {
-                                    iframe.src = `${instances[i]}?autoplay=${autoplay ? 1 : 0}`;
-                                }, i * 1000);
-                            }
-                            setTimeout(() => reject(new Error('All invidious instances failed')), 5000);
-                        };
-                        
-                    } catch (error) {
-                        reject(error);
-                    }
-                });
-            }
-
-            // Méthode 3: YouTube Lite (lightweight)
-            liteMethod(videoId, autoplay = false) {
-                return new Promise((resolve, reject) => {
-                    try {
-                        ytPlayerContainer.innerHTML = '';
-                        
-                        // YouTube Lite Player
-                        const litePlayer = document.createElement('div');
-                        litePlayer.innerHTML = `
-                            <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#000;">
-                                <div style="margin-bottom:20px; text-align:center;">
-                                    <i class="fab fa-youtube" style="font-size:48px; color:#ff0000;"></i>
-                                    <div style="margin-top:10px; font-size:14px; color:#fff;">YouTube Lite Player</div>
-                                </div>
-                                <div style="width:90%; max-width:560px;">
-                                    <iframe 
-                                        src="https://www.youtube.com/embed/${videoId}?rel=0&autoplay=${autoplay ? 1 : 0}&controls=1&modestbranding=1"
-                                        style="width:100%; height:315px; border:none; border-radius:8px;"
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        allowfullscreen>
-                                    </iframe>
-                                </div>
-                                <div style="margin-top:20px; font-size:12px; color:#888;">
-                                    Using lightweight embed method
-                                </div>
-                            </div>
-                        `;
-                        
-                        ytPlayerContainer.appendChild(litePlayer);
-                        
-                        setTimeout(() => {
-                            ytPlaceholder.style.display = 'none';
-                            this.currentMethod = 'lite';
-                            resolve(true);
-                        }, 2000);
-                        
-                    } catch (error) {
-                        reject(error);
-                    }
-                });
-            }
-
-            // Méthode 4: Piped (alternative)
-            pipedMethod(videoId, autoplay = false) {
-                return new Promise((resolve, reject) => {
-                    try {
-                        ytPlayerContainer.innerHTML = '';
-                        
-                        const iframe = document.createElement('iframe');
-                        iframe.id = 'ytPipedPlayer';
-                        iframe.src = `https://piped.video/embed/${videoId}?autoplay=${autoplay ? 1 : 0}`;
-                        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-                        iframe.setAttribute('allowfullscreen', '');
-                        iframe.style.width = '100%';
-                        iframe.style.height = '100%';
-                        iframe.style.border = 'none';
-                        
-                        ytPlayerContainer.appendChild(iframe);
-                        
-                        setTimeout(() => {
-                            ytPlaceholder.style.display = 'none';
-                            this.currentMethod = 'piped';
-                            resolve(true);
-                        }, 1500);
-                        
-                    } catch (error) {
-                        reject(error);
-                    }
-                });
-            }
-
-            // Méthode 5: Embedding classique avec retry
-            embedMethod(videoId, autoplay = false) {
-                return new Promise((resolve, reject) => {
-                    try {
-                        ytPlayerContainer.innerHTML = '';
-                        
-                        const iframe = document.createElement('iframe');
-                        iframe.id = 'ytEmbedPlayer';
-                        
-                        // Différentes configurations d'embedding
-                        const embedConfigs = [
-                            `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=${autoplay ? 1 : 0}`,
-                            `https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&autoplay=${autoplay ? 1 : 0}`,
-                            `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&autoplay=${autoplay ? 1 : 0}`
-                        ];
-                        
-                        iframe.src = embedConfigs[0];
-                        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-                        iframe.setAttribute('allowfullscreen', '');
-                        iframe.style.width = '100%';
-                        iframe.style.height = '100%';
-                        iframe.style.border = 'none';
-                        
-                        ytPlayerContainer.appendChild(iframe);
-                        
-                        let configIndex = 0;
-                        
-                        const checkPlayer = () => {
-                            setTimeout(() => {
-                                try {
-                                    // Vérifier si le player fonctionne
-                                    if (iframe.contentWindow && iframe.contentWindow.location.href.includes('youtube')) {
-                                        ytPlaceholder.style.display = 'none';
-                                        this.currentMethod = 'embed';
-                                        resolve(true);
-                                    } else if (configIndex < embedConfigs.length - 1) {
-                                        // Essayer une autre configuration
-                                        configIndex++;
-                                        iframe.src = embedConfigs[configIndex];
-                                        checkPlayer();
-                                    } else {
-                                        reject(new Error('All embed configs failed'));
-                                    }
-                                } catch (e) {
-                                    if (configIndex < embedConfigs.length - 1) {
-                                        configIndex++;
-                                        iframe.src = embedConfigs[configIndex];
-                                        checkPlayer();
-                                    } else {
-                                        reject(e);
-                                    }
-                                }
-                            }, 2000);
-                        };
-                        
-                        checkPlayer();
-                        
-                    } catch (error) {
-                        reject(error);
-                    }
-                });
-            }
-
-            // Jouer une vidéo avec méthode intelligente
             async playVideo(videoId, autoplay = false) {
                 this.currentVideoId = videoId;
-                this.methodAttempts = 0;
                 
                 // Afficher le loading
                 ytPlaceholder.style.display = 'flex';
                 ytPlaceholder.innerHTML = `
                     <i class="fab fa-youtube"></i><br>
-                    INITIALIZING PLAYER...<br>
+                    LOADING YOUTUBE PLAYER...<br>
                     <div style="margin-top:10px; font-size:12px; opacity:0.7;">
-                        GitHub Pages optimized
+                        Trying secure method...
                     </div>
                 `;
                 
-                // Essayer les méthodes dans l'ordre
-                for (const method of this.availableMethods) {
-                    this.methodAttempts++;
+                try {
+                    ytPlayerContainer.innerHTML = '';
                     
-                    try {
-                        ytPlaceholder.innerHTML = `
-                            <i class="fab fa-youtube"></i><br>
-                            TRYING METHOD ${this.methodAttempts}/5...<br>
-                            <div style="margin-top:10px; font-size:12px; opacity:0.7;">
-                                ${method.replace('Method', '').toUpperCase()}
-                            </div>
-                        `;
+                    // Méthode la plus fiable pour GitHub Pages
+                    const iframe = document.createElement('iframe');
+                    iframe.id = 'ytSecurePlayer';
+                    iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=${autoplay ? 1 : 0}&playsinline=1`;
+                    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+                    iframe.setAttribute('allowfullscreen', '');
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    
+                    ytPlayerContainer.appendChild(iframe);
+                    
+                    // Attendre que l'iframe se charge
+                    await new Promise((resolve) => {
+                        iframe.onload = () => {
+                            setTimeout(() => {
+                                ytPlaceholder.style.display = 'none';
+                                resolve();
+                            }, 500);
+                        };
                         
-                        await this[method](videoId, autoplay);
-                        
-                        // Succès
-                        statusIndicator.textContent = autoplay ? "PLAYING" : "READY";
-                        const playBtnIcon = document.querySelector('#playPauseBtn i');
-                        playBtnIcon.className = autoplay ? 'fas fa-pause' : 'fas fa-play';
-                        
-                        console.log(`YouTube player loaded successfully with method: ${method}`);
-                        return true;
-                        
-                    } catch (error) {
-                        console.warn(`Method ${method} failed:`, error);
-                        continue;
-                    }
+                        // Timeout de secours
+                        setTimeout(() => {
+                            ytPlaceholder.style.display = 'none';
+                            resolve();
+                        }, 3000);
+                    });
+                    
+                    statusIndicator.textContent = autoplay ? "PLAYING" : "READY";
+                    const playBtnIcon = document.querySelector('#playPauseBtn i');
+                    playBtnIcon.className = autoplay ? 'fas fa-pause' : 'fas fa-play';
+                    
+                    return true;
+                    
+                } catch (error) {
+                    console.warn("YouTube player error:", error);
+                    this.showFallback(videoId);
+                    return false;
                 }
-                
-                // Toutes les méthodes ont échoué
-                this.showFallback(videoId);
-                return false;
             }
 
-            // Fallback avec lien direct
             showFallback(videoId) {
                 ytPlayerContainer.innerHTML = '';
                 ytPlaceholder.style.display = 'flex';
                 ytPlaceholder.innerHTML = `
                     <div style="text-align:center; padding:20px;">
-                        <i class="fab fa-youtube" style="font-size:60px; color:#ff0000; margin-bottom:20px;"></i>
-                        <div style="font-size:16px; margin-bottom:10px; color:var(--primary-cyan);">DIRECT PLAYER</div>
-                        <div style="font-size:13px; margin-bottom:20px; opacity:0.8;">
-                            Using alternative player method
-                        </div>
-                        <div style="width:100%; max-width:560px; margin:0 auto;">
-                            <iframe 
-                                src="https://www.youtube-nocookie.com/embed/${videoId}"
-                                style="width:100%; height:315px; border:none; border-radius:8px;"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowfullscreen>
-                            </iframe>
-                        </div>
-                        <div style="margin-top:20px; font-size:12px; opacity:0.7;">
-                            If player doesn't work, 
-                            <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" style="color:var(--primary-cyan);">
-                                click here to watch on YouTube
+                        <i class="fab fa-youtube" style="font-size:48px; color:#ff0000; margin-bottom:15px;"></i>
+                        <div style="font-size:16px; margin-bottom:10px;">Alternative Player</div>
+                        <div style="margin-bottom:20px;">
+                            <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" 
+                               style="color:var(--primary-cyan); text-decoration:none; display:inline-block; padding:10px 20px; border:2px solid var(--primary-cyan); border-radius:5px; font-family:'Orbitron'; font-size:12px;">
+                               <i class="fas fa-external-link-alt"></i> OPEN ON YOUTUBE
                             </a>
+                        </div>
+                        <div style="font-size:12px; opacity:0.7; margin-top:15px;">
+                            Or try: <a href="https://yewtu.be/watch?v=${videoId}" target="_blank" style="color:var(--accent-blue);">yewtu.be</a>
                         </div>
                     </div>
                 `;
                 statusIndicator.textContent = "ALTERNATIVE PLAYER";
             }
 
-            // Arrêter le player
             stop() {
                 ytPlayerContainer.innerHTML = '';
                 ytPlaceholder.style.display = 'flex';
                 ytPlaceholder.innerHTML = `<i class="fab fa-youtube"></i><br>READY TO PLAY`;
-                this.currentMethod = null;
             }
         }
 
-        // Créer le player intelligent
-        const youtubePlayer = new SmartYouTubePlayer();
+        // Créer le player simple
+        const youtubePlayer = new SimpleYouTubePlayer();
 
-        // --- ZIP GENERATOR AVEC NETTOYAGE DES %20 ---
+        // --- ZIP GENERATOR AVEC NOMS DE FICHIERS PROPRES ---
         class CleanZipGenerator {
             constructor() {
-                this.maxWorkers = 8; // 8 connexions parallèles pour GitHub Pages
+                this.maxWorkers = 6;
                 this.progress = 0;
                 this.totalFiles = 0;
                 this.processedFiles = 0;
@@ -905,71 +677,100 @@
                 this.failedCount = 0;
             }
 
-            // Nettoyer les noms de fichiers (enlever %20 et autres encodages)
+            // Nettoyer COMPLÈTEMENT les noms de fichiers
             cleanFileName(filename) {
-                if (!filename) return 'unknown.mp3';
+                if (!filename) return 'track.mp3';
                 
-                // Décoder les URL encodées
-                let clean = decodeURIComponent(filename);
+                let clean = filename;
                 
-                // Remplacer les espaces et caractères spéciaux
-                clean = clean.replace(/%20/g, ' ')
-                             .replace(/%2C/g, ',')
-                             .replace(/%2F/g, '-')
-                             .replace(/%3A/g, '-')
-                             .replace(/%5B/g, '(')
-                             .replace(/%5D/g, ')')
-                             .replace(/%26/g, '&')
-                             .replace(/%3F/g, '');
-                
-                // Nettoyer les caractères invalides pour les noms de fichiers
-                clean = clean.replace(/[<>:"|?*]/g, '_')
-                             .replace(/\\/g, '-')
-                             .replace(/\//g, '-')
-                             .replace(/\.\./g, '.');
-                
-                // S'assurer que l'extension est .mp3
-                if (!clean.toLowerCase().endsWith('.mp3')) {
-                    clean += '.mp3';
+                // 1. Décoder les URL encodées
+                try {
+                    clean = decodeURIComponent(clean);
+                } catch (e) {
+                    // Si le décodage échoue, essayer de nettoyer manuellement
+                    clean = clean.replace(/%20/g, ' ')
+                                 .replace(/%28/g, '(')
+                                 .replace(/%29/g, ')')
+                                 .replace(/%2C/g, ',')
+                                 .replace(/%27/g, "'")
+                                 .replace(/%22/g, '"')
+                                 .replace(/%3A/g, ':')
+                                 .replace(/%2F/g, '-')
+                                 .replace(/%5B/g, '[')
+                                 .replace(/%5D/g, ']');
                 }
                 
-                // Limiter la longueur
-                if (clean.length > 100) {
-                    const parts = clean.split('.');
-                    const ext = parts.pop();
-                    const name = parts.join('.').substring(0, 60);
-                    clean = `${name}...${ext}`;
+                // 2. Extraire seulement le nom du fichier (sans chemin)
+                const lastSlash = clean.lastIndexOf('/');
+                if (lastSlash !== -1) {
+                    clean = clean.substring(lastSlash + 1);
+                }
+                
+                // 3. Supprimer les paramètres de requête
+                const queryIndex = clean.indexOf('?');
+                if (queryIndex !== -1) {
+                    clean = clean.substring(0, queryIndex);
+                }
+                
+                // 4. Nettoyer les caractères problématiques
+                clean = clean.replace(/[<>:"|?*]/g, '_') // Caractères Windows interdits
+                             .replace(/\\/g, '-')        // Backslashes
+                             .replace(/\//g, '-')        // Slashes
+                             .replace(/\.\./g, '.')      // Double dots
+                             .replace(/^\s+|\s+$/g, '')  // Espaces au début/fin
+                             .replace(/\s+/g, ' ');      // Multiples espaces -> un seul
+                
+                // 5. S'assurer que c'est un fichier MP3
+                if (!clean.toLowerCase().endsWith('.mp3')) {
+                    // Extraire le nom sans extension
+                    const dotIndex = clean.lastIndexOf('.');
+                    if (dotIndex !== -1) {
+                        clean = clean.substring(0, dotIndex) + '.mp3';
+                    } else {
+                        clean += '.mp3';
+                    }
+                }
+                
+                // 6. Si le nom est trop long ou vide, utiliser un nom générique
+                if (clean.length === 0 || clean.length > 100) {
+                    const timestamp = Date.now().toString(36);
+                    clean = `track_${timestamp}.mp3`;
                 }
                 
                 return clean;
             }
 
             // Nettoyer le chemin complet
-            cleanPath(path) {
-                if (!path) return 'downloads/';
+            cleanPath(item) {
+                let path = '';
                 
-                // Décoder le chemin
-                let cleanPath = decodeURIComponent(path);
-                
-                // Remplacer les %20 par des espaces
-                cleanPath = cleanPath.replace(/%20/g, ' ');
-                
-                // Nettoyer chaque segment du chemin
-                const segments = cleanPath.split('/');
-                const cleanedSegments = segments.map(segment => {
-                    if (!segment) return '';
-                    return this.cleanFileName(segment);
-                });
-                
-                // Reconstruire le chemin
-                cleanPath = cleanedSegments.filter(s => s).join('/');
-                
-                // S'assurer qu'il commence par "Music/" pour l'organisation
-                if (!cleanPath.toLowerCase().startsWith('music/')) {
-                    cleanPath = 'Music/' + cleanPath;
+                // Utiliser le chemin d'origine si disponible
+                if (item.path && item.path !== '/' && item.path !== 'YouTube Root') {
+                    path = decodeURIComponent(item.path);
                 }
                 
-                return cleanPath;
+                // Sinon, utiliser le nom du fichier pour créer un chemin
+                if (!path || path === '/') {
+                    const cleanName = this.cleanFileName(item.name);
+                    path = `Music/${cleanName}`;
+                } else {
+                    // Nettoyer chaque segment du chemin
+                    const segments = path.split('/');
+                    const cleanedSegments = segments.map(segment => {
+                        if (!segment) return '';
+                        return this.cleanFileName(segment);
+                    });
+                    
+                    // Reconstruire le chemin
+                    path = cleanedSegments.filter(s => s).join('/');
+                    
+                    // S'assurer que le chemin commence par Music/
+                    if (!path.toLowerCase().startsWith('music/')) {
+                        path = 'Music/' + path;
+                    }
+                }
+                
+                return path;
             }
 
             async createZip(items) {
@@ -986,7 +787,7 @@
 
                 const zip = new JSZip();
                 
-                // Télécharger en parallèle par lots
+                // Télécharger en parallèle
                 const chunkSize = Math.max(1, Math.ceil(audioItems.length / this.maxWorkers));
                 const chunks = this.chunkArray(audioItems, chunkSize);
                 
@@ -1001,11 +802,9 @@
                     if (result.status === 'fulfilled') {
                         const downloadedFiles = result.value;
                         for (const [path, blob] of Object.entries(downloadedFiles)) {
-                            if (blob && blob.size > 1024) { // Au moins 1KB
+                            if (blob && blob.size > 1024) {
                                 zip.file(path, blob);
                                 this.successCount++;
-                            } else {
-                                this.failedCount++;
                             }
                         }
                     }
@@ -1029,22 +828,12 @@
                     try {
                         const blob = await this.downloadFile(item.url);
                         if (blob && blob.size > 1024) {
-                            // Nettoyer le nom de fichier et le chemin
-                            const cleanName = this.cleanFileName(item.name);
-                            const cleanPath = this.cleanPath(item.path);
-                            
-                            // Créer le chemin final
-                            let finalPath = cleanPath;
-                            if (finalPath.endsWith('/')) {
-                                finalPath += cleanName;
-                            } else if (!finalPath.includes('.')) {
-                                finalPath += '/' + cleanName;
-                            }
-                            
-                            results[finalPath] = blob;
+                            // Nettoyer le chemin et le nom
+                            const cleanPath = this.cleanPath(item);
+                            results[cleanPath] = blob;
                         }
                     } catch (e) {
-                        console.warn(`Failed to download ${item.name}:`, e.message);
+                        console.warn(`Failed to download:`, e.message);
                         this.failedCount++;
                     } finally {
                         this.processedFiles++;
@@ -1056,36 +845,29 @@
             }
 
             async downloadFile(url) {
-                // Proxies pour contourner CORS (GitHub Pages compatible)
-                const proxies = [
-                    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-                    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-                    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-                    u => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(u)}`
-                ];
-
-                for (const proxy of proxies) {
-                    try {
-                        const proxyUrl = proxy(url);
-                        const response = await fetch(proxyUrl, {
-                            signal: AbortSignal.timeout(15000), // 15 secondes timeout
-                            headers: {
-                                'User-Agent': 'Beatstreet-Downloader/1.0'
-                            }
-                        });
-                        
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        
-                        const blob = await response.blob();
-                        if (blob.size > 0) {
-                            return blob;
-                        }
-                    } catch (e) {
-                        continue; // Essayer le proxy suivant
-                    }
-                }
+                // Utiliser un proxy CORS fiable
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
                 
-                throw new Error("All download methods failed");
+                try {
+                    const response = await fetch(proxyUrl, {
+                        signal: AbortSignal.timeout(15000),
+                        headers: {
+                            'Accept': 'audio/mpeg, audio/*',
+                            'User-Agent': 'Beatstreet-Downloader/1.0'
+                        }
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    const blob = await response.blob();
+                    if (blob.size > 0) {
+                        return blob;
+                    }
+                    throw new Error("Empty file");
+                    
+                } catch (error) {
+                    throw error;
+                }
             }
 
             updateProgress() {
@@ -1097,14 +879,14 @@
                 
                 if (progressBar) progressBar.style.width = this.progress + '%';
                 if (statusText) {
-                    statusText.textContent = `Processed ${this.processedFiles}/${this.totalFiles} files (${this.successCount}成功, ${this.failedCount}失败)`;
+                    statusText.textContent = `Downloaded ${this.processedFiles}/${this.totalFiles} files`;
                 }
                 
                 if (this.startTime && speedInfo) {
                     const elapsed = (Date.now() - this.startTime) / 1000;
                     if (elapsed > 0) {
                         const speed = this.processedFiles / elapsed;
-                        speedInfo.textContent = `速度: ${speed.toFixed(1)} 文件/秒 | 成功: ${this.successCount}`;
+                        speedInfo.textContent = `Speed: ${speed.toFixed(1)} files/sec | Clean names: ON`;
                     }
                 }
             }
@@ -1128,6 +910,37 @@
             }
         }
 
+        // Fonction pour nettoyer l'affichage des noms
+        function cleanDisplayName(name) {
+            if (!name) return 'Unknown Track';
+            
+            let clean = name;
+            
+            // Décoder les URL encodées
+            try {
+                clean = decodeURIComponent(clean);
+            } catch (e) {
+                // Nettoyage manuel si le décodage échoue
+                clean = clean.replace(/%20/g, ' ')
+                             .replace(/%28/g, '(')
+                             .replace(/%29/g, ')')
+                             .replace(/%2C/g, ',')
+                             .replace(/%27/g, "'")
+                             .replace(/%2D/g, '-');
+            }
+            
+            // Extraire juste le nom du fichier
+            const lastSlash = clean.lastIndexOf('/');
+            if (lastSlash !== -1) {
+                clean = clean.substring(lastSlash + 1);
+            }
+            
+            // Supprimer l'extension .mp3 pour l'affichage
+            clean = clean.replace(/\.mp3$/i, '');
+            
+            return clean;
+        }
+
         function playMedia(index) {
             if (index < 0 || index >= playlist.length) return;
             currentIndex = index;
@@ -1142,7 +955,6 @@
                 if(id) {
                     youtubePlayer.playVideo(id, false);
                     
-                    // Mettre à jour le bouton MP3
                     mp3ActionBtn.onclick = () => {
                         window.open(`https://youtubemultidownloader.org/en/?url=${encodeURIComponent(currentMediaItem.url)}`, '_blank');
                     };
@@ -1156,9 +968,10 @@
                 switchScreen('audio');
                 audioEl.src = currentMediaItem.url;
                 audioEl.play();
-                audioTitle.textContent = decodeURIComponent(currentMediaItem.name); // Décoder le nom
+                audioTitle.textContent = cleanDisplayName(currentMediaItem.name);
+                
                 if(currentMediaItem.path) {
-                    audioPath.textContent = decodeURIComponent(currentMediaItem.path); // Décoder le chemin
+                    audioPath.textContent = cleanDisplayName(currentMediaItem.path);
                 } else {
                     audioPath.textContent = "/";
                 }
@@ -1176,16 +989,15 @@
             if (url.includes('youtube.com') || url.includes('youtu.be')) {
                 const videoId = extractYTId(url);
                 if (videoId) {
-                    // Décoder le nom pour l'affichage
-                    const decodedName = decodeURIComponent(url.split('/').pop() || `YouTube: ${videoId}`);
-                    addToPlaylist(url, decodedName, 'youtube', 'YouTube Root');
+                    const displayName = cleanDisplayName(url.split('/').pop() || `YouTube: ${videoId}`);
+                    addToPlaylist(url, displayName, 'youtube', 'YouTube Root');
                     playMedia(playlist.length - 1);
                 } else {
                     alert("Invalid YouTube URL");
                 }
-            } else if (url.endsWith('.mp3')) {
-                const decodedName = decodeURIComponent(url.split('/').pop());
-                addToPlaylist(url, decodedName, 'audio', '/');
+            } else if (url.toLowerCase().endsWith('.mp3')) {
+                const displayName = cleanDisplayName(url.split('/').pop());
+                addToPlaylist(url, displayName, 'audio', '/');
                 playMedia(playlist.length - 1);
             } else {
                 document.getElementById('scanInput').value = url;
@@ -1329,7 +1141,7 @@
 
                 let pathDisplay = '';
                 if (item.path && item.path !== '/' && item.path !== 'YouTube Root') {
-                    const parts = decodeURIComponent(item.path).split('/').filter(p => p);
+                    const parts = cleanDisplayName(item.path).split('/').filter(p => p);
                     pathDisplay = parts.join(' <i class="fas fa-chevron-right" style="font-size:8px; margin:0 2px;"></i> ');
                 }
 
@@ -1337,7 +1149,7 @@
                     <div class="cyber-check ${isSelected ? 'checked' : ''}" onclick="toggleSelection('${item.uid}')"></div>
                     <div class="track-info-wrapper">
                         <div class="track-path">${pathDisplay}</div>
-                        <div class="track-name">${icon} ${decodeURIComponent(item.name)}</div>
+                        <div class="track-name">${icon} ${cleanDisplayName(item.name)}</div>
                     </div>
                     <div class="delete-btn" onclick="deleteTrack('${item.uid}', event)">
                         <i class="fas fa-times"></i>
@@ -1357,7 +1169,7 @@
             selectedCountBadge.textContent = `(${selectedUids.size})`;
         }
 
-        // --- ZIP AVEC NETTOYAGE ---
+        // --- ZIP AVEC NOMS PROPRES ---
         document.getElementById('downloadZipBtn').addEventListener('click', async () => {
             if(selectedUids.size === 0) {
                 alert("Please select songs first by checking the boxes.");
@@ -1380,14 +1192,14 @@
             zipOverlay.style.display = 'flex';
             progressBar.style.width = '0%';
             statusText.textContent = `Starting download of ${audioItems.length} files...`;
-            speedInfo.textContent = "";
+            speedInfo.textContent = "Cleaning filenames...";
 
             try {
                 const zipGenerator = new CleanZipGenerator();
                 const zip = await zipGenerator.createZip(selectedItems);
                 
                 if (!zip || zipGenerator.successCount === 0) {
-                    throw new Error(`Download failed. Success: ${zipGenerator.successCount}/${audioItems.length}`);
+                    throw new Error(`Download failed. Only ${zipGenerator.successCount}/${audioItems.length} files downloaded.`);
                 }
 
                 progressBar.style.width = '100%';
@@ -1402,18 +1214,18 @@
                 const elapsed = (Date.now() - zipGenerator.startTime) / 1000;
                 const speed = zipGenerator.successCount / elapsed;
                 
-                speedInfo.textContent = `Completed in ${elapsed.toFixed(1)}s | Speed: ${speed.toFixed(1)} files/sec | Cleaned filenames`;
+                speedInfo.textContent = `Done in ${elapsed.toFixed(1)}s | ${speed.toFixed(1)} files/sec`;
                 
                 // Télécharger
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(content);
-                link.download = `Beatstreet_Clean_${Date.now()}.zip`;
+                link.download = `Beatstreet_Music_${new Date().toISOString().slice(0,10)}.zip`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 
                 setTimeout(() => {
-                    alert(`✓ Successfully downloaded ${zipGenerator.successCount} files!\n• Time: ${elapsed.toFixed(1)} seconds\n• Speed: ${speed.toFixed(1)} files/sec\n• Filenames cleaned (no %20)`);
+                    alert(`✅ Successfully downloaded ${zipGenerator.successCount} files!\n• Clean filenames (no %20)\n• Organized in /Music/ folder\n• All files in proper MP3 format`);
                     zipOverlay.style.display = 'none';
                     progressBar.style.width = '0%';
                 }, 500);
@@ -1432,20 +1244,18 @@
                     /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i,
                     /youtube\.com\/watch\?v=([^&]{11})/,
                     /youtu\.be\/([^?]{11})/,
-                    /youtube\.com\/embed\/([^?]{11})/,
-                    /youtube\.com\/v\/([^?]{11})/
+                    /youtube\.com\/embed\/([^?]{11})/
                 ];
                 
                 for (const pattern of patterns) {
                     const match = url.match(pattern);
-                    if (match && match[1] && match[1].length === 11) {
+                    if (match && match[1]) {
                         return match[1];
                     }
                 }
                 
                 return null;
             } catch(e) {
-                console.error("Error extracting YouTube ID:", e);
                 return null;
             }
         }
@@ -1453,8 +1263,8 @@
         // Initialisation
         window.addEventListener('DOMContentLoaded', () => {
             // URL d'exemple
-            urlInput.value = 'https://www.youtube.com/watch?v=2_JyKGP5QLQ';
-            statusIndicator.textContent = "READY | GitHub Pages";
+            urlInput.value = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+            statusIndicator.textContent = "READY";
         });
 
         // Exposer les fonctions globales
@@ -1532,7 +1342,7 @@
                 if(relativePath.startsWith('/')) relativePath = relativePath.substring(1);
 
                 const depthClass = depth < 2 ? 'depth-1' : '';
-                l(`[DEPTH ${depth}] ${decodeURIComponent(relativePath.replace(/\/$/, ''))}`, depthClass);
+                l(`[DEPTH ${depth}] ${cleanDisplayName(relativePath.replace(/\/$/, ''))}`, depthClass);
 
                 try {
                     const html = await fetchContent(url);
@@ -1553,8 +1363,8 @@
                             if(!absUrl.includes(rootUrlObj.origin)) return;
 
                             if(absUrl.toLowerCase().endsWith('.mp3')) {
-                                const fileName = decodeURIComponent(absUrl.split('/').pop());
-                                const filePath = decodeURIComponent(absUrl.replace(rootUrlObj.origin, '')); 
+                                const fileName = cleanDisplayName(absUrl.split('/').pop());
+                                const filePath = cleanDisplayName(absUrl.replace(rootUrlObj.origin, ''));
                                 
                                 addToPlaylist(absUrl, fileName, 'audio', filePath);
                                 l(`  → FOUND: ${fileName}`, 'found');
@@ -1584,5 +1394,4 @@
         });
     </script>
 </body>
-
 </html>
