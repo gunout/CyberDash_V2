@@ -400,6 +400,42 @@
         .zip-bar-bg { width: 100%; height: 10px; background: #000; margin: 20px 0; }
         .zip-bar-fill { height: 100%; background: var(--primary-cyan); width: 0%; transition: width 0.3s; }
 
+        /* Download Method Selector */
+        .method-selector {
+            margin: 15px 0;
+            text-align: left;
+        }
+        
+        .method-option {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            border: 1px solid var(--dark-cyan);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .method-option:hover {
+            border-color: var(--primary-cyan);
+            background: rgba(0, 255, 255, 0.05);
+        }
+        
+        .method-option input {
+            margin-right: 10px;
+        }
+        
+        .method-label {
+            flex: 1;
+        }
+        
+        .method-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
         @media(max-width: 900px) { .main-content { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -432,7 +468,7 @@
                     <div style="text-align:center; color:var(--text-secondary); padding:30px; opacity:0.5;">NO DATA</div>
                 </div>
                 <button class="download-zip-btn" id="downloadZipBtn">
-                    <i class="fas fa-file-archive"></i> ZIP SELECTED
+                    <i class="fas fa-file-archive"></i> DOWNLOAD SELECTED
                     <small id="selectedCountBadge">(0)</small>
                 </button>
             </section>
@@ -525,31 +561,61 @@
     <!-- ZIP PROGRESS OVERLAY -->
     <div class="zip-overlay" id="zipOverlay">
         <div class="zip-box">
-            <h2 style="font-family:'Orbitron'; color:var(--primary-cyan); margin-bottom:15px;">CREATING ARCHIVE</h2>
-            <div id="zipStatusText">Organizing folders...</div>
+            <h2 style="font-family:'Orbitron'; color:var(--primary-cyan); margin-bottom:15px;">DOWNLOAD MANAGER</h2>
+            
+            <div class="method-selector">
+                <div class="method-option" onclick="selectMethod('server')">
+                    <input type="radio" id="methodServer" name="downloadMethod" checked>
+                    <div class="method-label">
+                        <strong>SERVER-SIDE DOWNLOAD</strong>
+                        <div class="method-desc">Direct download from original server (fastest)</div>
+                    </div>
+                </div>
+                
+                <div class="method-option" onclick="selectMethod('proxy')">
+                    <input type="radio" id="methodProxy" name="downloadMethod">
+                    <div class="method-label">
+                        <strong>PROXY DOWNLOAD</strong>
+                        <div class="method-desc">Use CORS proxy (works with restrictions)</div>
+                    </div>
+                </div>
+                
+                <div class="method-option" onclick="selectMethod('list')">
+                    <input type="radio" id="methodList" name="downloadMethod">
+                    <div class="method-label">
+                        <strong>DOWNLOAD LIST</strong>
+                        <div class="method-desc">Generate download links list (manual download)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="zipStatusText">Select files and choose download method...</div>
             <div class="zip-bar-bg">
                 <div class="zip-bar-fill" id="zipProgressBar"></div>
             </div>
             <div id="zipSpeedInfo" style="margin-top:10px; font-size:12px; color:var(--text-secondary);"></div>
+            
+            <div id="downloadLinks" style="margin-top:15px; text-align:left; max-height:200px; overflow-y:auto; display:none;">
+                <!-- Download links will appear here -->
+            </div>
+            
+            <div style="margin-top:20px;">
+                <button class="cyber-btn" onclick="startDownload()" id="startDownloadBtn" style="background:rgba(0,255,0,0.1); border-color:#0f0; color:#0f0;">
+                    <i class="fas fa-download"></i> START DOWNLOAD
+                </button>
+                <button class="cyber-btn" onclick="closeZipOverlay()" style="margin-left:10px;">CANCEL</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- PARTICLES ---
-        const cyberBg = document.getElementById('cyberBg');
-        for(let i=0; i<40; i++) {
-            const p = document.createElement('div'); p.className='particle';
-            p.style.left = Math.random()*100+'%'; p.style.animationDelay = Math.random()*20+'s';
-            cyberBg.appendChild(p);
-        }
-
         // --- STATE ---
         let playlist = [];
         let selectedUids = new Set();
         let currentIndex = -1;
         let currentMediaItem = null;
         let isSelectAll = false;
-        let currentYouTubePlayer = null;
+        let currentDownloadMethod = 'server'; // 'server', 'proxy', 'list'
 
         // --- DOM ---
         const screens = {
@@ -571,356 +637,17 @@
         const audioPath = document.getElementById('audioPath');
         const mp3ActionBtn = document.getElementById('mp3ActionBtn');
 
-        // --- YOUTUBE PLAYER SIMPLE QUI FONCTIONNE ---
-        class SimpleYouTubePlayer {
-            constructor() {
-                this.currentVideoId = null;
-            }
-
-            async playVideo(videoId, autoplay = false) {
-                this.currentVideoId = videoId;
-                
-                // Afficher le loading
-                ytPlaceholder.style.display = 'flex';
-                ytPlaceholder.innerHTML = `
-                    <i class="fab fa-youtube"></i><br>
-                    LOADING YOUTUBE PLAYER...<br>
-                    <div style="margin-top:10px; font-size:12px; opacity:0.7;">
-                        Trying secure method...
-                    </div>
-                `;
-                
-                try {
-                    ytPlayerContainer.innerHTML = '';
-                    
-                    // Méthode la plus fiable pour GitHub Pages
-                    const iframe = document.createElement('iframe');
-                    iframe.id = 'ytSecurePlayer';
-                    iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=${autoplay ? 1 : 0}&playsinline=1`;
-                    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-                    iframe.setAttribute('allowfullscreen', '');
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    iframe.style.border = 'none';
-                    
-                    ytPlayerContainer.appendChild(iframe);
-                    
-                    // Attendre que l'iframe se charge
-                    await new Promise((resolve) => {
-                        iframe.onload = () => {
-                            setTimeout(() => {
-                                ytPlaceholder.style.display = 'none';
-                                resolve();
-                            }, 500);
-                        };
-                        
-                        // Timeout de secours
-                        setTimeout(() => {
-                            ytPlaceholder.style.display = 'none';
-                            resolve();
-                        }, 3000);
-                    });
-                    
-                    statusIndicator.textContent = autoplay ? "PLAYING" : "READY";
-                    const playBtnIcon = document.querySelector('#playPauseBtn i');
-                    playBtnIcon.className = autoplay ? 'fas fa-pause' : 'fas fa-play';
-                    
-                    return true;
-                    
-                } catch (error) {
-                    console.warn("YouTube player error:", error);
-                    this.showFallback(videoId);
-                    return false;
-                }
-            }
-
-            showFallback(videoId) {
-                ytPlayerContainer.innerHTML = '';
-                ytPlaceholder.style.display = 'flex';
-                ytPlaceholder.innerHTML = `
-                    <div style="text-align:center; padding:20px;">
-                        <i class="fab fa-youtube" style="font-size:48px; color:#ff0000; margin-bottom:15px;"></i>
-                        <div style="font-size:16px; margin-bottom:10px;">Alternative Player</div>
-                        <div style="margin-bottom:20px;">
-                            <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" 
-                               style="color:var(--primary-cyan); text-decoration:none; display:inline-block; padding:10px 20px; border:2px solid var(--primary-cyan); border-radius:5px; font-family:'Orbitron'; font-size:12px;">
-                               <i class="fas fa-external-link-alt"></i> OPEN ON YOUTUBE
-                            </a>
-                        </div>
-                        <div style="font-size:12px; opacity:0.7; margin-top:15px;">
-                            Or try: <a href="https://yewtu.be/watch?v=${videoId}" target="_blank" style="color:var(--accent-blue);">yewtu.be</a>
-                        </div>
-                    </div>
-                `;
-                statusIndicator.textContent = "ALTERNATIVE PLAYER";
-            }
-
-            stop() {
-                ytPlayerContainer.innerHTML = '';
-                ytPlaceholder.style.display = 'flex';
-                ytPlaceholder.innerHTML = `<i class="fab fa-youtube"></i><br>READY TO PLAY`;
-            }
-        }
-
-        // Créer le player simple
-        const youtubePlayer = new SimpleYouTubePlayer();
-
-        // --- ZIP GENERATOR AVEC NOMS DE FICHIERS PROPRES ---
-        class CleanZipGenerator {
-            constructor() {
-                this.maxWorkers = 6;
-                this.progress = 0;
-                this.totalFiles = 0;
-                this.processedFiles = 0;
-                this.startTime = null;
-                this.successCount = 0;
-                this.failedCount = 0;
-            }
-
-            // Nettoyer COMPLÈTEMENT les noms de fichiers
-            cleanFileName(filename) {
-                if (!filename) return 'track.mp3';
-                
-                let clean = filename;
-                
-                // 1. Décoder les URL encodées
-                try {
-                    clean = decodeURIComponent(clean);
-                } catch (e) {
-                    // Si le décodage échoue, essayer de nettoyer manuellement
-                    clean = clean.replace(/%20/g, ' ')
-                                 .replace(/%28/g, '(')
-                                 .replace(/%29/g, ')')
-                                 .replace(/%2C/g, ',')
-                                 .replace(/%27/g, "'")
-                                 .replace(/%22/g, '"')
-                                 .replace(/%3A/g, ':')
-                                 .replace(/%2F/g, '-')
-                                 .replace(/%5B/g, '[')
-                                 .replace(/%5D/g, ']');
-                }
-                
-                // 2. Extraire seulement le nom du fichier (sans chemin)
-                const lastSlash = clean.lastIndexOf('/');
-                if (lastSlash !== -1) {
-                    clean = clean.substring(lastSlash + 1);
-                }
-                
-                // 3. Supprimer les paramètres de requête
-                const queryIndex = clean.indexOf('?');
-                if (queryIndex !== -1) {
-                    clean = clean.substring(0, queryIndex);
-                }
-                
-                // 4. Nettoyer les caractères problématiques
-                clean = clean.replace(/[<>:"|?*]/g, '_') // Caractères Windows interdits
-                             .replace(/\\/g, '-')        // Backslashes
-                             .replace(/\//g, '-')        // Slashes
-                             .replace(/\.\./g, '.')      // Double dots
-                             .replace(/^\s+|\s+$/g, '')  // Espaces au début/fin
-                             .replace(/\s+/g, ' ');      // Multiples espaces -> un seul
-                
-                // 5. S'assurer que c'est un fichier MP3
-                if (!clean.toLowerCase().endsWith('.mp3')) {
-                    // Extraire le nom sans extension
-                    const dotIndex = clean.lastIndexOf('.');
-                    if (dotIndex !== -1) {
-                        clean = clean.substring(0, dotIndex) + '.mp3';
-                    } else {
-                        clean += '.mp3';
-                    }
-                }
-                
-                // 6. Si le nom est trop long ou vide, utiliser un nom générique
-                if (clean.length === 0 || clean.length > 100) {
-                    const timestamp = Date.now().toString(36);
-                    clean = `track_${timestamp}.mp3`;
-                }
-                
-                return clean;
-            }
-
-            // Nettoyer le chemin complet
-            cleanPath(item) {
-                let path = '';
-                
-                // Utiliser le chemin d'origine si disponible
-                if (item.path && item.path !== '/' && item.path !== 'YouTube Root') {
-                    path = decodeURIComponent(item.path);
-                }
-                
-                // Sinon, utiliser le nom du fichier pour créer un chemin
-                if (!path || path === '/') {
-                    const cleanName = this.cleanFileName(item.name);
-                    path = `Music/${cleanName}`;
-                } else {
-                    // Nettoyer chaque segment du chemin
-                    const segments = path.split('/');
-                    const cleanedSegments = segments.map(segment => {
-                        if (!segment) return '';
-                        return this.cleanFileName(segment);
-                    });
-                    
-                    // Reconstruire le chemin
-                    path = cleanedSegments.filter(s => s).join('/');
-                    
-                    // S'assurer que le chemin commence par Music/
-                    if (!path.toLowerCase().startsWith('music/')) {
-                        path = 'Music/' + path;
-                    }
-                }
-                
-                return path;
-            }
-
-            async createZip(items) {
-                this.startTime = Date.now();
-                const audioItems = items.filter(item => item.type === 'audio');
-                this.totalFiles = audioItems.length;
-                this.processedFiles = 0;
-                this.successCount = 0;
-                this.failedCount = 0;
-                
-                if (this.totalFiles === 0) {
-                    return null;
-                }
-
-                const zip = new JSZip();
-                
-                // Télécharger en parallèle
-                const chunkSize = Math.max(1, Math.ceil(audioItems.length / this.maxWorkers));
-                const chunks = this.chunkArray(audioItems, chunkSize);
-                
-                const downloadPromises = chunks.map((chunk, index) => 
-                    this.downloadChunk(chunk, index)
-                );
-                
-                const results = await Promise.allSettled(downloadPromises);
-                
-                // Ajouter les fichiers réussis au ZIP
-                for (const result of results) {
-                    if (result.status === 'fulfilled') {
-                        const downloadedFiles = result.value;
-                        for (const [path, blob] of Object.entries(downloadedFiles)) {
-                            if (blob && blob.size > 1024) {
-                                zip.file(path, blob);
-                                this.successCount++;
-                            }
-                        }
-                    }
-                }
-
-                return zip;
-            }
-
-            chunkArray(array, size) {
-                const chunks = [];
-                for (let i = 0; i < array.length; i += size) {
-                    chunks.push(array.slice(i, i + size));
-                }
-                return chunks;
-            }
-
-            async downloadChunk(chunk, chunkIndex) {
-                const results = {};
-                
-                for (const item of chunk) {
-                    try {
-                        const blob = await this.downloadFile(item.url);
-                        if (blob && blob.size > 1024) {
-                            // Nettoyer le chemin et le nom
-                            const cleanPath = this.cleanPath(item);
-                            results[cleanPath] = blob;
-                        }
-                    } catch (e) {
-                        console.warn(`Failed to download:`, e.message);
-                        this.failedCount++;
-                    } finally {
-                        this.processedFiles++;
-                        this.updateProgress();
-                    }
-                }
-                
-                return results;
-            }
-
-            async downloadFile(url) {
-                // Utiliser un proxy CORS fiable
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-                
-                try {
-                    const response = await fetch(proxyUrl, {
-                        signal: AbortSignal.timeout(15000),
-                        headers: {
-                            'Accept': 'audio/mpeg, audio/*',
-                            'User-Agent': 'Beatstreet-Downloader/1.0'
-                        }
-                    });
-                    
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    
-                    const blob = await response.blob();
-                    if (blob.size > 0) {
-                        return blob;
-                    }
-                    throw new Error("Empty file");
-                    
-                } catch (error) {
-                    throw error;
-                }
-            }
-
-            updateProgress() {
-                this.progress = (this.processedFiles / this.totalFiles) * 100;
-                
-                const progressBar = document.getElementById('zipProgressBar');
-                const statusText = document.getElementById('zipStatusText');
-                const speedInfo = document.getElementById('zipSpeedInfo');
-                
-                if (progressBar) progressBar.style.width = this.progress + '%';
-                if (statusText) {
-                    statusText.textContent = `Downloaded ${this.processedFiles}/${this.totalFiles} files`;
-                }
-                
-                if (this.startTime && speedInfo) {
-                    const elapsed = (Date.now() - this.startTime) / 1000;
-                    if (elapsed > 0) {
-                        const speed = this.processedFiles / elapsed;
-                        speedInfo.textContent = `Speed: ${speed.toFixed(1)} files/sec | Clean names: ON`;
-                    }
-                }
-            }
-
-            getProgress() {
-                return this.progress;
-            }
-        }
-
-        // --- PLAYBACK LOGIC ---
-        function switchScreen(type) {
-            Object.values(screens).forEach(s => s.classList.remove('active'));
-            if (type === 'youtube') {
-                screens.yt.classList.add('active');
-                modeIndicator.textContent = "MODE: YOUTUBE";
-                mp3ActionBtn.classList.add('show');
-            } else if (type === 'audio') {
-                screens.audio.classList.add('active');
-                modeIndicator.textContent = "MODE: AUDIO STREAM";
-                mp3ActionBtn.classList.remove('show');
-            }
-        }
-
-        // Fonction pour nettoyer l'affichage des noms
-        function cleanDisplayName(name) {
-            if (!name) return 'Unknown Track';
+        // --- UTILITY FUNCTIONS ---
+        function cleanFileName(filename) {
+            if (!filename) return 'track.mp3';
             
-            let clean = name;
+            let clean = filename;
             
             // Décoder les URL encodées
             try {
                 clean = decodeURIComponent(clean);
             } catch (e) {
-                // Nettoyage manuel si le décodage échoue
+                // Nettoyage manuel
                 clean = clean.replace(/%20/g, ' ')
                              .replace(/%28/g, '(')
                              .replace(/%29/g, ')')
@@ -935,10 +662,474 @@
                 clean = clean.substring(lastSlash + 1);
             }
             
-            // Supprimer l'extension .mp3 pour l'affichage
-            clean = clean.replace(/\.mp3$/i, '');
+            // Supprimer les paramètres
+            const queryIndex = clean.indexOf('?');
+            if (queryIndex !== -1) {
+                clean = clean.substring(0, queryIndex);
+            }
+            
+            // Nettoyer les caractères
+            clean = clean.replace(/[<>:"|?*]/g, '_')
+                         .replace(/\\/g, '-')
+                         .replace(/\//g, '-')
+                         .replace(/\.\./g, '.')
+                         .replace(/^\s+|\s+$/g, '')
+                         .replace(/\s+/g, ' ');
+            
+            // Assurer l'extension .mp3
+            if (!clean.toLowerCase().endsWith('.mp3')) {
+                const dotIndex = clean.lastIndexOf('.');
+                if (dotIndex !== -1) {
+                    clean = clean.substring(0, dotIndex) + '.mp3';
+                } else {
+                    clean += '.mp3';
+                }
+            }
+            
+            // Nom générique si vide
+            if (clean.length === 0 || clean.length > 100) {
+                const timestamp = Date.now().toString(36);
+                clean = `track_${timestamp}.mp3`;
+            }
             
             return clean;
+        }
+
+        function cleanDisplayName(name) {
+            if (!name) return 'Unknown Track';
+            
+            let clean = name;
+            try {
+                clean = decodeURIComponent(clean);
+            } catch (e) {
+                clean = clean.replace(/%20/g, ' ')
+                             .replace(/%28/g, '(')
+                             .replace(/%29/g, ')')
+                             .replace(/%2C/g, ',')
+                             .replace(/%27/g, "'");
+            }
+            
+            const lastSlash = clean.lastIndexOf('/');
+            if (lastSlash !== -1) {
+                clean = clean.substring(lastSlash + 1);
+            }
+            
+            clean = clean.replace(/\.mp3$/i, '');
+            return clean;
+        }
+
+        // --- DOWNLOAD METHOD SELECTION ---
+        function selectMethod(method) {
+            currentDownloadMethod = method;
+            
+            // Mettre à jour les radios
+            document.getElementById('methodServer').checked = method === 'server';
+            document.getElementById('methodProxy').checked = method === 'proxy';
+            document.getElementById('methodList').checked = method === 'list';
+            
+            // Mettre à jour le texte
+            const statusText = document.getElementById('zipStatusText');
+            const downloadLinks = document.getElementById('downloadLinks');
+            
+            if (method === 'list') {
+                statusText.textContent = "Will generate download links list";
+                downloadLinks.style.display = 'block';
+            } else {
+                statusText.textContent = `Ready for ${method} download`;
+                downloadLinks.style.display = 'none';
+            }
+        }
+
+        // --- DOWNLOAD MANAGER ---
+        class DownloadManager {
+            constructor() {
+                this.progress = 0;
+                this.totalFiles = 0;
+                this.processedFiles = 0;
+                this.successCount = 0;
+                this.failedCount = 0;
+                this.startTime = null;
+                this.downloadQueue = [];
+                this.isDownloading = false;
+            }
+
+            // Méthode 1: Téléchargement direct depuis le serveur
+            async downloadDirect(url) {
+                try {
+                    // Créer un lien caché et le cliquer
+                    return new Promise((resolve, reject) => {
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = '';
+                        link.style.display = 'none';
+                        document.body.appendChild(link);
+                        
+                        // Essayer de déclencher le téléchargement
+                        setTimeout(() => {
+                            try {
+                                link.click();
+                                resolve(true);
+                            } catch (e) {
+                                reject(e);
+                            } finally {
+                                document.body.removeChild(link);
+                            }
+                        }, 100);
+                    });
+                } catch (error) {
+                    throw error;
+                }
+            }
+
+            // Méthode 2: Utiliser un proxy
+            async downloadWithProxy(url) {
+                const proxies = [
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+                ];
+
+                for (const proxyUrl of proxies) {
+                    try {
+                        const response = await fetch(proxyUrl, {
+                            signal: AbortSignal.timeout(10000)
+                        });
+                        
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        
+                        const blob = await response.blob();
+                        if (blob.size > 0) {
+                            return blob;
+                        }
+                    } catch (e) {
+                        continue;
+                    }
+                }
+                
+                throw new Error("All proxies failed");
+            }
+
+            // Méthode 3: Générer des liens de téléchargement
+            generateDownloadLink(url, filename) {
+                return {
+                    url: url,
+                    filename: filename,
+                    link: `<a href="${url}" download="${filename}" target="_blank">${filename}</a>`
+                };
+            }
+
+            // Téléchargement en batch
+            async downloadBatch(items, method) {
+                this.startTime = Date.now();
+                this.totalFiles = items.length;
+                this.processedFiles = 0;
+                this.successCount = 0;
+                this.failedCount = 0;
+                this.isDownloading = true;
+
+                const results = {
+                    success: [],
+                    failed: [],
+                    links: []
+                };
+
+                if (method === 'list') {
+                    // Générer seulement la liste de liens
+                    for (const item of items) {
+                        const cleanName = cleanFileName(item.name);
+                        const link = this.generateDownloadLink(item.url, cleanName);
+                        results.links.push(link);
+                        this.processedFiles++;
+                        this.updateProgress();
+                    }
+                    return results;
+                }
+
+                // Téléchargements réels
+                for (const item of items) {
+                    try {
+                        const cleanName = cleanFileName(item.name);
+                        
+                        if (method === 'server') {
+                            await this.downloadDirect(item.url);
+                            results.success.push({ name: cleanName, url: item.url });
+                            this.successCount++;
+                        } else if (method === 'proxy') {
+                            const blob = await this.downloadWithProxy(item.url);
+                            if (blob) {
+                                // Créer un lien pour télécharger le blob
+                                const link = document.createElement('a');
+                                link.href = URL.createObjectURL(blob);
+                                link.download = cleanName;
+                                link.style.display = 'none';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                
+                                // Libérer la mémoire
+                                setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+                                
+                                results.success.push({ name: cleanName, url: item.url });
+                                this.successCount++;
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to download ${item.name}:`, error);
+                        results.failed.push({ name: item.name, error: error.message });
+                        this.failedCount++;
+                    } finally {
+                        this.processedFiles++;
+                        this.updateProgress();
+                        
+                        // Petite pause pour éviter de surcharger
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                }
+
+                this.isDownloading = false;
+                return results;
+            }
+
+            updateProgress() {
+                this.progress = (this.processedFiles / this.totalFiles) * 100;
+                
+                const progressBar = document.getElementById('zipProgressBar');
+                const statusText = document.getElementById('zipStatusText');
+                const speedInfo = document.getElementById('zipSpeedInfo');
+                
+                if (progressBar) progressBar.style.width = this.progress + '%';
+                if (statusText) {
+                    statusText.textContent = `Processed ${this.processedFiles}/${this.totalFiles} files`;
+                }
+                
+                if (this.startTime && speedInfo) {
+                    const elapsed = (Date.now() - this.startTime) / 1000;
+                    if (elapsed > 0) {
+                        const speed = this.processedFiles / elapsed;
+                        speedInfo.textContent = `Speed: ${speed.toFixed(1)} files/sec | Success: ${this.successCount}`;
+                    }
+                }
+            }
+
+            getProgress() {
+                return this.progress;
+            }
+        }
+
+        // --- ZIP OVERLAY FUNCTIONS ---
+        function openZipOverlay() {
+            if (selectedUids.size === 0) {
+                alert("Please select songs first by checking the boxes.");
+                return;
+            }
+            
+            const selectedItems = playlist.filter(item => selectedUids.has(item.uid));
+            const audioItems = selectedItems.filter(item => item.type === 'audio');
+            
+            if (audioItems.length === 0) {
+                alert("No audio files selected for download.");
+                return;
+            }
+
+            // Réinitialiser l'interface
+            document.getElementById('zipProgressBar').style.width = '0%';
+            document.getElementById('zipStatusText').textContent = `Ready to download ${audioItems.length} files`;
+            document.getElementById('zipSpeedInfo').textContent = `Selected: ${audioItems.length} files | Choose method`;
+            document.getElementById('downloadLinks').innerHTML = '';
+            document.getElementById('downloadLinks').style.display = 'none';
+            
+            // Afficher l'overlay
+            document.getElementById('zipOverlay').style.display = 'flex';
+        }
+
+        function closeZipOverlay() {
+            document.getElementById('zipOverlay').style.display = 'none';
+        }
+
+        async function startDownload() {
+            const selectedItems = playlist.filter(item => selectedUids.has(item.uid));
+            const audioItems = selectedItems.filter(item => item.type === 'audio');
+            
+            const downloadManager = new DownloadManager();
+            const startDownloadBtn = document.getElementById('startDownloadBtn');
+            const downloadLinks = document.getElementById('downloadLinks');
+            
+            // Désactiver le bouton pendant le téléchargement
+            startDownloadBtn.disabled = true;
+            startDownloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> DOWNLOADING...';
+            
+            try {
+                const results = await downloadManager.downloadBatch(audioItems, currentDownloadMethod);
+                
+                if (currentDownloadMethod === 'list') {
+                    // Afficher les liens
+                    let linksHTML = '<h4>DOWNLOAD LINKS:</h4>';
+                    results.links.forEach((link, index) => {
+                        linksHTML += `
+                            <div style="margin: 5px 0; padding: 8px; border: 1px solid var(--dark-cyan); border-radius: 3px;">
+                                <strong>${index + 1}.</strong> ${link.filename}<br>
+                                <a href="${link.url}" download="${link.filename}" target="_blank" 
+                                   style="color: var(--primary-cyan); font-size: 11px;">
+                                   <i class="fas fa-download"></i> Download
+                                </a> |
+                                <a href="${link.url}" target="_blank" 
+                                   style="color: var(--accent-blue); font-size: 11px;">
+                                   <i class="fas fa-external-link-alt"></i> Open
+                                </a>
+                            </div>
+                        `;
+                    });
+                    
+                    downloadLinks.innerHTML = linksHTML;
+                    downloadLinks.style.display = 'block';
+                    
+                    // Ajouter un bouton pour tout télécharger
+                    const bulkHTML = `
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(0,255,255,0.1); border-radius: 5px;">
+                            <strong>BULK DOWNLOAD:</strong><br>
+                            <div style="font-size: 11px; margin: 5px 0;">
+                                Copy all links and use a download manager like <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" style="color: var(--primary-cyan);">yt-dlp</a>:
+                            </div>
+                            <textarea id="bulkLinks" style="width: 100%; height: 60px; background: #000; color: var(--primary-cyan); border: 1px solid var(--dark-cyan); padding: 5px; font-size: 10px; font-family: monospace; margin: 5px 0;">${results.links.map(l => l.url).join('\n')}</textarea>
+                            <button onclick="copyBulkLinks()" style="background: var(--primary-cyan); color: #000; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 11px;">
+                                <i class="fas fa-copy"></i> Copy Links
+                            </button>
+                        </div>
+                    `;
+                    
+                    downloadLinks.innerHTML += bulkHTML;
+                    
+                    document.getElementById('zipStatusText').textContent = `Generated ${results.links.length} download links`;
+                    
+                } else {
+                    // Téléchargement direct ou proxy
+                    const elapsed = (Date.now() - downloadManager.startTime) / 1000;
+                    const speed = downloadManager.successCount / elapsed;
+                    
+                    document.getElementById('zipSpeedInfo').textContent = 
+                        `Completed in ${elapsed.toFixed(1)}s | Speed: ${speed.toFixed(1)} files/sec | Success: ${downloadManager.successCount}/${audioItems.length}`;
+                    
+                    if (downloadManager.successCount > 0) {
+                        document.getElementById('zipStatusText').textContent = 
+                            `✅ Successfully downloaded ${downloadManager.successCount} files!`;
+                        
+                        // Afficher les échecs
+                        if (downloadManager.failedCount > 0) {
+                            setTimeout(() => {
+                                alert(`Download complete!\n\nSuccess: ${downloadManager.successCount} files\nFailed: ${downloadManager.failedCount} files\n\nFailed files may require manual download.`);
+                            }, 1000);
+                        }
+                    } else {
+                        document.getElementById('zipStatusText').textContent = 
+                            `❌ Download failed. Try another method or download manually.`;
+                    }
+                }
+                
+            } catch (error) {
+                console.error("Download error:", error);
+                document.getElementById('zipStatusText').textContent = `Error: ${error.message}`;
+            } finally {
+                // Réactiver le bouton
+                startDownloadBtn.disabled = false;
+                startDownloadBtn.innerHTML = '<i class="fas fa-download"></i> START DOWNLOAD';
+            }
+        }
+
+        function copyBulkLinks() {
+            const textarea = document.getElementById('bulkLinks');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999); // Pour mobile
+            document.execCommand('copy');
+            
+            // Feedback visuel
+            const originalText = textarea.placeholder;
+            textarea.placeholder = "Links copied to clipboard!";
+            setTimeout(() => {
+                textarea.placeholder = originalText;
+            }, 2000);
+        }
+
+        // --- YOUTUBE PLAYER SIMPLE ---
+        class SimpleYouTubePlayer {
+            async playVideo(videoId, autoplay = false) {
+                ytPlaceholder.style.display = 'flex';
+                ytPlaceholder.innerHTML = `<i class="fab fa-youtube"></i><br>LOADING...`;
+                
+                try {
+                    ytPlayerContainer.innerHTML = '';
+                    
+                    const iframe = document.createElement('iframe');
+                    iframe.id = 'ytPlayer';
+                    iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=${autoplay ? 1 : 0}`;
+                    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+                    iframe.setAttribute('allowfullscreen', '');
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    
+                    ytPlayerContainer.appendChild(iframe);
+                    
+                    // Attendre le chargement
+                    await new Promise((resolve) => {
+                        iframe.onload = () => {
+                            setTimeout(() => {
+                                ytPlaceholder.style.display = 'none';
+                                resolve();
+                            }, 500);
+                        };
+                        setTimeout(resolve, 3000);
+                    });
+                    
+                    statusIndicator.textContent = autoplay ? "PLAYING" : "READY";
+                    const playBtnIcon = document.querySelector('#playPauseBtn i');
+                    playBtnIcon.className = autoplay ? 'fas fa-pause' : 'fas fa-play';
+                    
+                    return true;
+                    
+                } catch (error) {
+                    this.showFallback(videoId);
+                    return false;
+                }
+            }
+
+            showFallback(videoId) {
+                ytPlayerContainer.innerHTML = '';
+                ytPlaceholder.style.display = 'flex';
+                ytPlaceholder.innerHTML = `
+                    <div style="text-align:center;">
+                        <i class="fab fa-youtube" style="font-size:48px; color:#ff0000;"></i>
+                        <div style="margin:15px 0;">
+                            <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" 
+                               style="color:var(--primary-cyan); text-decoration:none; padding:10px 20px; border:2px solid var(--primary-cyan); border-radius:5px; display:inline-block;">
+                               <i class="fas fa-external-link-alt"></i> WATCH ON YOUTUBE
+                            </a>
+                        </div>
+                    </div>
+                `;
+                statusIndicator.textContent = "EMBEDDING DISABLED";
+            }
+
+            stop() {
+                ytPlayerContainer.innerHTML = '';
+                ytPlaceholder.style.display = 'flex';
+                ytPlaceholder.innerHTML = `<i class="fab fa-youtube"></i><br>READY TO PLAY`;
+            }
+        }
+
+        const youtubePlayer = new SimpleYouTubePlayer();
+
+        // --- PLAYBACK LOGIC ---
+        function switchScreen(type) {
+            Object.values(screens).forEach(s => s.classList.remove('active'));
+            if (type === 'youtube') {
+                screens.yt.classList.add('active');
+                modeIndicator.textContent = "MODE: YOUTUBE";
+                mp3ActionBtn.classList.add('show');
+            } else if (type === 'audio') {
+                screens.audio.classList.add('active');
+                modeIndicator.textContent = "MODE: AUDIO STREAM";
+                mp3ActionBtn.classList.remove('show');
+            }
         }
 
         function playMedia(index) {
@@ -1005,7 +1196,7 @@
             }
         });
 
-        // --- CONTROLS (PLAY/PAUSE) ---
+        // --- CONTROLS ---
         const playBtn = document.getElementById('playPauseBtn');
         playBtn.addEventListener('click', () => {
             const icon = playBtn.querySelector('i');
@@ -1169,74 +1360,8 @@
             selectedCountBadge.textContent = `(${selectedUids.size})`;
         }
 
-        // --- ZIP AVEC NOMS PROPRES ---
-        document.getElementById('downloadZipBtn').addEventListener('click', async () => {
-            if(selectedUids.size === 0) {
-                alert("Please select songs first by checking the boxes.");
-                return;
-            }
-            
-            const selectedItems = playlist.filter(item => selectedUids.has(item.uid));
-            const audioItems = selectedItems.filter(item => item.type === 'audio');
-            
-            if(audioItems.length === 0) {
-                alert("No audio files selected for download.");
-                return;
-            }
-
-            const zipOverlay = document.getElementById('zipOverlay');
-            const progressBar = document.getElementById('zipProgressBar');
-            const statusText = document.getElementById('zipStatusText');
-            const speedInfo = document.getElementById('zipSpeedInfo');
-
-            zipOverlay.style.display = 'flex';
-            progressBar.style.width = '0%';
-            statusText.textContent = `Starting download of ${audioItems.length} files...`;
-            speedInfo.textContent = "Cleaning filenames...";
-
-            try {
-                const zipGenerator = new CleanZipGenerator();
-                const zip = await zipGenerator.createZip(selectedItems);
-                
-                if (!zip || zipGenerator.successCount === 0) {
-                    throw new Error(`Download failed. Only ${zipGenerator.successCount}/${audioItems.length} files downloaded.`);
-                }
-
-                progressBar.style.width = '100%';
-                statusText.textContent = "Creating final ZIP archive...";
-                
-                const content = await zip.generateAsync({
-                    type: "blob",
-                    compression: "DEFLATE",
-                    compressionOptions: { level: 1 }
-                });
-                
-                const elapsed = (Date.now() - zipGenerator.startTime) / 1000;
-                const speed = zipGenerator.successCount / elapsed;
-                
-                speedInfo.textContent = `Done in ${elapsed.toFixed(1)}s | ${speed.toFixed(1)} files/sec`;
-                
-                // Télécharger
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(content);
-                link.download = `Beatstreet_Music_${new Date().toISOString().slice(0,10)}.zip`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                setTimeout(() => {
-                    alert(`✅ Successfully downloaded ${zipGenerator.successCount} files!\n• Clean filenames (no %20)\n• Organized in /Music/ folder\n• All files in proper MP3 format`);
-                    zipOverlay.style.display = 'none';
-                    progressBar.style.width = '0%';
-                }, 500);
-                
-            } catch(e) {
-                console.error("ZIP creation error:", e);
-                alert("Error: " + e.message);
-                zipOverlay.style.display = 'none';
-                progressBar.style.width = '0%';
-            }
-        });
+        // --- MODIFIER LE BOUTON ZIP POUR OUVRIR L'OVERLAY ---
+        document.getElementById('downloadZipBtn').addEventListener('click', openZipOverlay);
 
         function extractYTId(url) {
             try {
@@ -1260,28 +1385,15 @@
             }
         }
 
-        // Initialisation
-        window.addEventListener('DOMContentLoaded', () => {
-            // URL d'exemple
-            urlInput.value = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-            statusIndicator.textContent = "READY";
-        });
-
-        // Exposer les fonctions globales
-        window.openScanner = openScanner;
-        window.closeScanner = closeScanner;
-        window.toggleSelection = toggleSelection;
-        window.deleteTrack = deleteTrack;
-
-        // Scanner functions
+        // --- SCANNER ---
         function openScanner() { 
             document.getElementById('scannerOverlay').style.display = 'flex'; 
         }
+        
         function closeScanner() { 
             document.getElementById('scannerOverlay').style.display = 'none'; 
         }
 
-        // Scanner logic
         const PROXIES = [
             (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
             (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
@@ -1392,6 +1504,26 @@
         document.getElementById('stopScanBtn').addEventListener('click', () => {
             isScanning = false;
         });
+
+        // Initialisation
+        window.addEventListener('DOMContentLoaded', () => {
+            urlInput.value = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+            statusIndicator.textContent = "READY";
+            
+            // Sélectionner la méthode par défaut
+            selectMethod('server');
+        });
+
+        // Exposer les fonctions globales
+        window.openScanner = openScanner;
+        window.closeScanner = closeScanner;
+        window.toggleSelection = toggleSelection;
+        window.deleteTrack = deleteTrack;
+        window.selectMethod = selectMethod;
+        window.startDownload = startDownload;
+        window.closeZipOverlay = closeZipOverlay;
+        window.copyBulkLinks = copyBulkLinks;
+        window.openZipOverlay = openZipOverlay;
     </script>
 </body>
 </html>
