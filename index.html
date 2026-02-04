@@ -27,6 +27,7 @@
             --danger-red: #ff3333;
             --success-green: #00ff66;
             --warning-orange: #ff9900;
+            --purple: #ff00ff;
             --glow-cyan: 0 0 10px rgba(0, 255, 255, 0.6), 0 0 20px rgba(0, 255, 255, 0.4);
             --glow-strong: 0 0 15px var(--neon-blue), 0 0 30px var(--primary-cyan);
         }
@@ -188,8 +189,18 @@
             font-family: 'Orbitron'; font-weight: 700; cursor: pointer; text-transform: uppercase;
             font-size: 12px; box-shadow: 0 0 10px rgba(255, 153, 0, 0.6); transition: 0.3s;
             display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0;
+            margin-bottom: 8px;
         }
         .test-download-btn:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(255, 153, 0, 0.8); }
+
+        .download-all-btn {
+            background: linear-gradient(45deg, var(--purple), #cc00cc);
+            border: none; color: #000; padding: 12px; border-radius: 5px;
+            font-family: 'Orbitron'; font-weight: 700; cursor: pointer; text-transform: uppercase;
+            font-size: 12px; box-shadow: 0 0 10px rgba(255, 0, 255, 0.6); transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0;
+        }
+        .download-all-btn:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(255, 0, 255, 0.8); }
 
         /* Center Media Deck */
         .media-deck { flex: 1; display: flex; flex-direction: column; }
@@ -301,6 +312,38 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideOut { to { transform: translateX(100%); opacity: 0; } }
 
+        /* Download Mode Dialog Styles */
+        .mode-btn {
+            border: none;
+            color: #000;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 12px;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+        .mode-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .mode-btn small {
+            font-size: 10px;
+            opacity: 0.9;
+            font-weight: normal;
+            text-transform: none;
+        }
+
         @media(max-width: 900px) { .main-content { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -315,7 +358,7 @@
             <div class="logo">BEATSTREET <span style="color:var(--primary-cyan)">SELECTOR</span></div>
             <div class="status-bar">
                 <div class="status-item"><div class="status-dot"></div> ONLINE</div>
-                <div class="status-item"><div class="status-dot" style="background:#ffff00"></div> MANAGER</div>
+                <div class="status-item"><div class="status-dot" style="background:#ffff00"></div> ⚡ FAST MODE</div>
             </div>
         </header>
 
@@ -326,7 +369,7 @@
                     <span id="playlistTitle">DATA STREAM [0/0]</span>
                     <div>
                         <button class="select-all-btn" id="selectAllBtn">
-                            <i class="fas fa-check-double"></i> SELECT ALL
+                            <i class="fas fa-check-double"></i> SELECT ALL AUDIO
                         </button>
                         <i class="fas fa-database"></i>
                     </div>
@@ -339,7 +382,10 @@
                     <small id="selectedCountBadge">(0)</small>
                 </button>
                 <button class="test-download-btn" id="testDownloadBtn">
-                    <i class="fas fa-vial"></i> TEST DOWNLOAD (5 FILES)
+                    <i class="fas fa-bolt"></i> FAST TEST (10 FILES)
+                </button>
+                <button class="download-all-btn" id="downloadAllBtn">
+                    <i class="fas fa-rocket"></i> DOWNLOAD ALL AUDIO
                 </button>
             </section>
 
@@ -384,7 +430,7 @@
                     <div class="bar-left">
                         <span id="modeIndicator">MODE: YOUTUBE</span>
                         <br>
-                        <span id="statusIndicator" style="color:var(--primary-cyan)">READY</span>
+                        <span id="statusIndicator" style="color:var(--primary-cyan)">⚡ READY | FAST MODE</span>
                     </div>
                     <div class="bar-controls">
                         <button class="icon-btn" id="prevBtn"><i class="fas fa-step-backward"></i></button>
@@ -429,7 +475,7 @@
     <!-- ZIP PROGRESS OVERLAY -->
     <div class="overlay" id="zipOverlay">
         <div class="overlay-box" style="width: 600px;">
-            <h2 style="font-family:'Orbitron'; color:var(--primary-cyan); margin-bottom:15px;">CREATING ARCHIVE</h2>
+            <h2 style="font-family:'Orbitron'; color:var(--primary-cyan); margin-bottom:15px;">⚡ CREATING ARCHIVE</h2>
             <div id="zipStatusText">Organizing folders...</div>
             <div class="zip-bar-bg">
                 <div class="zip-bar-fill" id="zipProgressBar"></div>
@@ -545,6 +591,7 @@
         const audioPath = document.getElementById('audioPath');
         const mp3ActionBtn = document.getElementById('mp3ActionBtn');
         const testDownloadBtn = document.getElementById('testDownloadBtn');
+        const downloadAllBtn = document.getElementById('downloadAllBtn');
 
         // --- YOUTUBE PLAYER ---
         class SmartYouTubePlayer {
@@ -628,8 +675,8 @@
         }
         const youtubePlayer = new SmartYouTubePlayer();
 
-        // --- SIMPLE ZIP GENERATOR (FIXED VERSION) ---
-        class SimpleZipGenerator {
+        // --- ULTRA FAST ZIP GENERATOR ---
+        class UltraFastZipGenerator {
             constructor() {
                 this.totalFiles = 0;
                 this.processedFiles = 0;
@@ -638,6 +685,17 @@
                 this.startTime = null;
                 this.isProcessing = false;
                 this.abortController = null;
+                this.concurrentDownloads = 5; // 5 téléchargements simultanés
+                this.cache = new Map();
+                this.retryCache = new Map();
+                this.proxyIndex = 0;
+                this.proxies = [
+                    'https://corsproxy.io/?',
+                    'https://api.allorigins.win/raw?url=',
+                    'https://api.codetabs.com/v1/proxy?quest=',
+                    'https://thingproxy.freeboard.io/fetch/',
+                    'https://cors-anywhere.herokuapp.com/'
+                ];
             }
 
             cleanFileName(filename) {
@@ -706,20 +764,55 @@
                     throw new Error("No audio files to download");
                 }
                 
-                document.getElementById('zipStatusText').textContent = 
-                    `Preparing to download ${this.totalFiles.toLocaleString()} files...`;
+                document.getElementById('zipStatusText').innerHTML = 
+                    `<div>⚡ Preparing ${this.totalFiles} files</div>
+                     <div><small>5 concurrent downloads • Ultra Fast Mode</small></div>`;
                 
                 const zip = new JSZip();
+                const results = new Map();
                 
-                // Télécharger les fichiers un par un
-                for (let i = 0; i < audioItems.length; i++) {
+                try {
+                    // Diviser les fichiers en groupes pour téléchargement parallèle
+                    const groups = this.splitIntoGroups(audioItems, this.concurrentDownloads);
+                    
+                    // Télécharger tous les groupes en parallèle
+                    const groupPromises = groups.map((group, groupIndex) => 
+                        this.downloadGroup(group, groupIndex, results)
+                    );
+                    
+                    await Promise.all(groupPromises);
+                    
+                    // Ajouter tous les fichiers réussis au ZIP
+                    for (const [url, data] of results) {
+                        zip.file(data.path, data.blob);
+                    }
+                    
+                    return zip;
+                    
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        throw new Error("Download cancelled by user");
+                    }
+                    throw error;
+                }
+            }
+
+            splitIntoGroups(items, groupCount) {
+                const groups = Array.from({ length: groupCount }, () => []);
+                items.forEach((item, index) => {
+                    groups[index % groupCount].push(item);
+                });
+                return groups;
+            }
+
+            async downloadGroup(group, groupIndex, results) {
+                for (const item of group) {
                     if (!this.isProcessing) break;
                     
-                    const item = audioItems[i];
                     try {
-                        const blob = await this.downloadFile(item.url);
+                        const blob = await this.downloadFileUltraFast(item.url);
                         
-                        if (blob && blob.size > 1024) { // Fichier valide (> 1KB)
+                        if (blob && blob.size > 10240) { // 10KB minimum
                             const cleanName = this.cleanFileName(item.name);
                             const cleanPath = this.cleanPath(item.path);
                             
@@ -732,45 +825,57 @@
                                 finalPath = 'Music/' + cleanName;
                             }
                             
-                            zip.file(finalPath, blob);
+                            results.set(item.url, { path: finalPath, blob });
                             this.successCount++;
-                            showNotification(`✓ ${cleanName}`, 'success');
+                            
+                            // Notification rapide pour les succès
+                            if (this.successCount % 5 === 0) {
+                                showNotification(`✓ ${this.successCount} files downloaded`, 'success');
+                            }
                         } else {
-                            console.warn(`File too small: ${item.name} (${blob ? blob.size : 0} bytes)`);
                             this.failedCount++;
                         }
                     } catch (error) {
-                        console.error(`Failed to download ${item.name}:`, error.message);
+                        console.warn(`Failed: ${item.name}`, error.message);
                         this.failedCount++;
-                        showNotification(`✗ ${this.cleanFileName(item.name)}`, 'error');
                     } finally {
                         this.processedFiles++;
                         this.updateProgress();
                         
-                        // Petit délai entre les téléchargements
-                        if (i < audioItems.length - 1) {
-                            await new Promise(resolve => setTimeout(resolve, 500));
+                        // Petit délai entre les fichiers d'un même groupe
+                        if (this.isProcessing) {
+                            await new Promise(resolve => setTimeout(resolve, 50));
                         }
                     }
                 }
-                
-                return zip;
             }
 
-            async downloadFile(url) {
+            async downloadFileUltraFast(url) {
+                // Vérifier le cache
+                if (this.cache.has(url)) {
+                    return this.cache.get(url);
+                }
+                
+                // Vérifier les échecs précédents
+                if (this.retryCache.get(url) > 2) {
+                    throw new Error("Too many failed attempts");
+                }
+                
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 secondes max
                 
                 try {
-                    // Essayer d'abord avec un proxy CORS
-                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                    // Choisir un proxy aléatoire pour répartir la charge
+                    const proxyIndex = Math.floor(Math.random() * this.proxies.length);
+                    const proxyUrl = this.proxies[proxyIndex] + encodeURIComponent(url);
                     
                     const response = await fetch(proxyUrl, {
                         signal: controller.signal,
                         headers: {
                             'Accept': 'audio/mpeg, audio/*',
                             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                        }
+                        },
+                        cache: 'no-store'
                     });
                     
                     clearTimeout(timeoutId);
@@ -781,44 +886,57 @@
                     
                     const blob = await response.blob();
                     
-                    // Validation basique
-                    if (blob.size < 1024) {
-                        throw new Error(`File too small: ${blob.size} bytes`);
+                    if (blob.size < 10240) {
+                        throw new Error("File too small");
                     }
                     
+                    // Mettre en cache
+                    this.cache.set(url, blob);
                     return blob;
                     
                 } catch (error) {
                     clearTimeout(timeoutId);
                     
-                    // Essayer avec un autre proxy en cas d'échec
-                    try {
-                        const proxyUrl2 = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-                        const response2 = await fetch(proxyUrl2, {
-                            signal: AbortSignal.timeout(15000)
-                        });
-                        
-                        if (!response2.ok) throw new Error(`HTTP ${response2.status}`);
-                        
-                        const blob2 = await response2.blob();
-                        if (blob2.size > 1024) return blob2;
-                        
-                        throw new Error("File too small");
-                        
-                    } catch (error2) {
-                        // Dernier essai avec proxy différent
-                        const proxyUrl3 = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
-                        const response3 = await fetch(proxyUrl3, {
-                            signal: AbortSignal.timeout(15000)
-                        });
-                        
-                        if (!response3.ok) throw new Error(`HTTP ${response3.status}`);
-                        
-                        const blob3 = await response3.blob();
-                        if (blob3.size > 1024) return blob3;
-                        
-                        throw new Error("All proxies failed or file too small");
+                    // Incrémenter le compteur d'échecs
+                    const attempts = (this.retryCache.get(url) || 0) + 1;
+                    this.retryCache.set(url, attempts);
+                    
+                    // Essayer une méthode de secours
+                    if (attempts <= 2) {
+                        return this.downloadFileFallback(url);
                     }
+                    
+                    throw error;
+                }
+            }
+
+            async downloadFileFallback(url) {
+                try {
+                    // Essayer un proxy différent
+                    for (const proxy of this.proxies) {
+                        if (!this.isProcessing) break;
+                        
+                        try {
+                            const proxyUrl = proxy + encodeURIComponent(url);
+                            const response = await fetch(proxyUrl, {
+                                signal: AbortSignal.timeout(5000)
+                            });
+                            
+                            if (response.ok) {
+                                const blob = await response.blob();
+                                if (blob.size > 10240) {
+                                    this.cache.set(url, blob);
+                                    return blob;
+                                }
+                            }
+                        } catch (e) {
+                            continue;
+                        }
+                    }
+                    
+                    throw new Error("All fallback methods failed");
+                } catch (error) {
+                    throw error;
                 }
             }
 
@@ -834,26 +952,37 @@
                 }
                 
                 if (statusText) {
-                    statusText.textContent = 
-                        `Downloaded ${this.processedFiles}/${this.totalFiles} files | ` +
-                        `Success: ${this.successCount} | Failed: ${this.failedCount}`;
+                    const elapsed = (Date.now() - this.startTime) / 1000;
+                    const filesPerSec = elapsed > 0 ? (this.processedFiles / elapsed).toFixed(1) : '0';
+                    const remainingFiles = this.totalFiles - this.processedFiles;
+                    const estTime = remainingFiles / (this.processedFiles / Math.max(elapsed, 1));
+                    
+                    let etaText = '';
+                    if (estTime > 0 && estTime < 60) {
+                        etaText = `ETA: ${Math.ceil(estTime)}s`;
+                    } else if (estTime > 0) {
+                        etaText = `ETA: ${Math.ceil(estTime / 60)}min`;
+                    }
+                    
+                    statusText.innerHTML = 
+                        `<div>⚡ Downloaded: <strong>${this.processedFiles}/${this.totalFiles}</strong></div>
+                         <div>Speed: <strong style="color:var(--primary-cyan)">${filesPerSec} files/sec</strong> ${etaText}</div>
+                         <div>✓ Success: <strong style="color:var(--success-green)">${this.successCount}</strong> | 
+                         ✗ Failed: <strong style="color:var(--danger-red)">${this.failedCount}</strong></div>`;
                 }
                 
                 if (speedInfo && this.startTime) {
                     const elapsed = (Date.now() - this.startTime) / 1000;
                     if (elapsed > 0 && this.processedFiles > 0) {
                         const filesPerSec = (this.processedFiles / elapsed).toFixed(1);
-                        const remainingFiles = this.totalFiles - this.processedFiles;
-                        const estTime = remainingFiles / (this.processedFiles / elapsed);
+                        speedInfo.textContent = `Instant speed: ${filesPerSec} files/sec`;
                         
-                        let timeText = `Speed: ${filesPerSec} files/sec`;
-                        
-                        if (estTime > 0 && estTime < 3600) {
-                            const minutes = Math.ceil(estTime / 60);
-                            timeText += ` | ETA: ${minutes} min`;
+                        // Changer la couleur selon la vitesse
+                        if (filesPerSec > 3) {
+                            speedInfo.style.color = 'var(--success-green)';
+                        } else if (filesPerSec > 1) {
+                            speedInfo.style.color = 'var(--warning-orange)';
                         }
-                        
-                        speedInfo.textContent = timeText;
                     }
                 }
             }
@@ -866,25 +995,25 @@
             }
         }
 
-        // --- FONCTION DE TÉLÉCHARGEMENT COMMUNE ---
-        async function downloadZip(audioItems, isTestMode = false) {
+        // --- FONCTION DE TÉLÉCHARGEMENT ULTRA RAPIDE ---
+        async function downloadZipUltraFast(audioItems, isTestMode = false) {
             if (audioItems.length === 0) {
                 showNotification("No audio files to download.", "error");
                 return;
             }
             
-            // Limiter à 5 fichiers en mode test
-            const itemsToDownload = isTestMode ? audioItems.slice(0, 5) : audioItems;
+            // Limiter à 10 fichiers en mode test
+            const itemsToDownload = isTestMode ? audioItems.slice(0, 10) : audioItems;
             
             const zipOverlay = document.getElementById('zipOverlay');
             zipOverlay.style.display = 'flex';
             document.getElementById('zipProgressBar').style.width = '0%';
             document.getElementById('zipStatusText').textContent = 
-                isTestMode ? 'Test mode: Downloading 5 files...' : `Downloading ${itemsToDownload.length} files...`;
+                isTestMode ? '⚡ FAST TEST: Downloading 10 files...' : `⚡ ULTRA FAST: ${itemsToDownload.length} files`;
             document.getElementById('cancelZipBtn').style.display = 'inline-block';
             
             try {
-                zipGenerator = new SimpleZipGenerator();
+                zipGenerator = new UltraFastZipGenerator();
                 zipGenerator.isProcessing = true;
                 
                 // Configurer le bouton d'annulation
@@ -908,31 +1037,31 @@
                     throw new Error("No files were successfully downloaded");
                 }
                 
-                // Finaliser la progression
+                // Finaliser
                 document.getElementById('zipProgressBar').style.width = '100%';
                 document.getElementById('zipStatusText').textContent = 
-                    `Creating archive (${zipGenerator.successCount} files)...`;
+                    `📦 Creating archive (${zipGenerator.successCount} files)...`;
                 
-                // Générer le fichier ZIP
+                // Générer le ZIP (sans compression pour plus de vitesse)
                 const content = await zip.generateAsync({
                     type: "blob",
-                    compression: "DEFLATE",
-                    compressionOptions: { level: 1 }
+                    compression: "STORE",
+                    platform: "UNIX"
                 });
                 
                 const elapsed = ((Date.now() - zipGenerator.startTime) / 1000).toFixed(1);
                 const sizeMB = (content.size / (1024 * 1024)).toFixed(1);
+                const speed = (zipGenerator.processedFiles / elapsed).toFixed(1);
                 
-                // Télécharger le fichier
+                // Télécharger
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(content);
                 link.download = isTestMode 
-                    ? `Beatstreet_Test_${zipGenerator.successCount}_files.zip`
+                    ? `Beatstreet_FAST_${zipGenerator.successCount}_files.zip`
                     : `Beatstreet_${new Date().toISOString().slice(0,10)}_${zipGenerator.successCount}_files.zip`;
                 document.body.appendChild(link);
                 link.click();
                 
-                // Nettoyer
                 setTimeout(() => {
                     document.body.removeChild(link);
                     URL.revokeObjectURL(link.href);
@@ -940,11 +1069,10 @@
                 
                 // Notification de succès
                 showNotification(
-                    `${isTestMode ? 'Test ' : ''}Success! ${zipGenerator.successCount} files (${sizeMB} MB) in ${elapsed}s.`,
+                    `⚡ ${isTestMode ? 'TEST ' : ''}COMPLETE! ${zipGenerator.successCount} files (${sizeMB} MB) in ${elapsed}s (${speed} files/sec)`,
                     "success"
                 );
                 
-                // Masquer l'overlay après un délai
                 setTimeout(() => {
                     zipOverlay.style.display = 'none';
                     document.getElementById('cancelZipBtn').style.display = 'none';
@@ -973,6 +1101,56 @@
             }
         }
 
+        // --- DIALOGUE DE SÉLECTION DE MODE ---
+        function showDownloadModeDialog(fileCount) {
+            return new Promise((resolve) => {
+                const dialogOverlay = document.createElement('div');
+                dialogOverlay.className = 'overlay';
+                dialogOverlay.style.zIndex = '4000';
+                dialogOverlay.innerHTML = `
+                    <div class="overlay-box" style="width: 500px;">
+                        <h2 style="font-family:'Orbitron'; color:var(--primary-cyan); margin-bottom:15px;">
+                            ⚡ DOWNLOAD MODE
+                        </h2>
+                        <div style="text-align:left; margin-bottom:20px;">
+                            <div style="color:var(--text-secondary); margin-bottom:15px;">
+                                <i class="fas fa-music"></i> ${fileCount} audio files selected
+                            </div>
+                            <button class="mode-btn" id="ultraFastBtn" style="background:linear-gradient(45deg, #00ff00, #00cc00);">
+                                <i class="fas fa-bolt"></i> <strong>ULTRA FAST MODE</strong>
+                                <small>5 concurrent downloads • No compression • Maximum speed</small>
+                            </button>
+                            <button class="mode-btn" id="testFastBtn" style="background:linear-gradient(45deg, var(--warning-orange), #ff6600);">
+                                <i class="fas fa-vial"></i> <strong>TEST SPEED (10 files)</strong>
+                                <small>Check download speed first • 10 files only</small>
+                            </button>
+                            <button class="mode-btn" id="cancelDialogBtn" style="background:rgba(255,0,0,0.1); border:1px solid red; color:red;">
+                                <i class="fas fa-times"></i> CANCEL
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(dialogOverlay);
+                dialogOverlay.style.display = 'flex';
+                
+                document.getElementById('ultraFastBtn').onclick = () => {
+                    document.body.removeChild(dialogOverlay);
+                    resolve('ultra');
+                };
+                
+                document.getElementById('testFastBtn').onclick = () => {
+                    document.body.removeChild(dialogOverlay);
+                    resolve('test');
+                };
+                
+                document.getElementById('cancelDialogBtn').onclick = () => {
+                    document.body.removeChild(dialogOverlay);
+                    resolve(null);
+                };
+            });
+        }
+
         // --- BOUTON ZIP PRINCIPAL ---
         document.getElementById('downloadZipBtn').addEventListener('click', async () => {
             if (selectedUids.size === 0) {
@@ -983,19 +1161,22 @@
             const selectedItems = playlist.filter(item => selectedUids.has(item.uid));
             const audioItems = selectedItems.filter(item => item.type === 'audio');
             
-            if (audioItems.length > 50) {
-                const proceed = confirm(
-                    `You are about to download ${audioItems.length} files.\n` +
-                    `This may take some time. Continue?`
-                );
-                
-                if (!proceed) return;
+            if (audioItems.length === 0) {
+                showNotification("No audio files to download.", "error");
+                return;
             }
             
-            await downloadZip(audioItems, false);
+            const mode = await showDownloadModeDialog(audioItems.length);
+            if (!mode) return;
+            
+            if (mode === 'ultra') {
+                await downloadZipUltraFast(audioItems, false);
+            } else if (mode === 'test') {
+                await downloadZipUltraFast(audioItems, true);
+            }
         });
 
-        // --- BOUTON TEST ---
+        // --- BOUTON TEST RAPIDE ---
         testDownloadBtn.addEventListener('click', async () => {
             if (selectedUids.size === 0) {
                 showNotification("No songs selected.", "error");
@@ -1010,8 +1191,65 @@
                 return;
             }
             
-            showNotification("Starting test download of 5 files...", "warning");
-            await downloadZip(audioItems, true);
+            showNotification("⚡ Starting ultra fast test (10 files)...", "warning");
+            await downloadZipUltraFast(audioItems, true);
+        });
+
+        // --- BOUTON DOWNLOAD ALL ---
+        downloadAllBtn.addEventListener('click', async () => {
+            if (playlist.length === 0) {
+                showNotification("Playlist is empty.", "error");
+                return;
+            }
+            
+            // Sélectionner tous les fichiers audio
+            selectedUids.clear();
+            playlist.forEach(item => {
+                if (item.type === 'audio') {
+                    selectedUids.add(item.uid);
+                }
+            });
+            
+            renderPlaylist();
+            
+            const audioItems = playlist.filter(item => item.type === 'audio');
+            if (audioItems.length === 0) {
+                showNotification("No audio files in playlist.", "error");
+                return;
+            }
+            
+            const mode = await showDownloadModeDialog(audioItems.length);
+            if (!mode) return;
+            
+            if (mode === 'ultra') {
+                await downloadZipUltraFast(audioItems, false);
+            } else if (mode === 'test') {
+                await downloadZipUltraFast(audioItems, true);
+            }
+        });
+
+        // --- SELECT ALL LOGIC ---
+        selectAllBtn.addEventListener('click', () => {
+            if (playlist.length === 0) return;
+            
+            if (isSelectAll) {
+                selectedUids.clear();
+                isSelectAll = false;
+                selectAllBtn.innerHTML = '<i class="fas fa-check-double"></i> SELECT ALL AUDIO';
+                showNotification("All files deselected", "info");
+            } else {
+                selectedUids.clear();
+                playlist.forEach(item => {
+                    if (item.type === 'audio') {
+                        selectedUids.add(item.uid);
+                    }
+                });
+                isSelectAll = true;
+                selectAllBtn.innerHTML = '<i class="fas fa-times"></i> DESELECT ALL';
+                showNotification(`Selected ${selectedUids.size} audio files`, "success");
+            }
+            
+            renderPlaylist();
         });
 
         // --- PLAYBACK LOGIC ---
@@ -1094,24 +1332,10 @@
         document.getElementById('prevBtn').onclick = () => playMedia((currentIndex - 1 + playlist.length) % playlist.length);
         document.getElementById('clearPlaylistBtn').onclick = () => {
             playlist = []; selectedUids.clear(); currentIndex = -1; isSelectAll = false;
-            selectAllBtn.innerHTML = '<i class="fas fa-check-double"></i> SELECT ALL';
+            selectAllBtn.innerHTML = '<i class="fas fa-check-double"></i> SELECT ALL AUDIO';
             youtubePlayer.stop(); audioEl.pause(); renderPlaylist();
             showNotification("Playlist cleared", "info");
         };
-
-        // --- SELECT ALL LOGIC ---
-        selectAllBtn.addEventListener('click', () => {
-            if (playlist.length === 0) return;
-            isSelectAll = !isSelectAll;
-            if (isSelectAll) {
-                selectedUids.clear(); playlist.forEach(item => selectedUids.add(item.uid));
-                selectAllBtn.innerHTML = '<i class="fas fa-times"></i> DESELECT ALL';
-            } else {
-                selectedUids.clear();
-                selectAllBtn.innerHTML = '<i class="fas fa-check-double"></i> SELECT ALL';
-            }
-            renderPlaylist();
-        });
 
         // --- PLAYLIST MANAGEMENT ---
         function addToPlaylist(url, name, type, path) {
@@ -1128,7 +1352,7 @@
         function updateSelectAllState() {
             const allSelected = playlist.length > 0 && playlist.every(item => selectedUids.has(item.uid));
             isSelectAll = allSelected;
-            selectAllBtn.innerHTML = allSelected ? '<i class="fas fa-times"></i> DESELECT ALL' : '<i class="fas fa-check-double"></i> SELECT ALL';
+            selectAllBtn.innerHTML = allSelected ? '<i class="fas fa-times"></i> DESELECT ALL' : '<i class="fas fa-check-double"></i> SELECT ALL AUDIO';
         }
 
         function deleteTrack(uid, event) {
@@ -1361,8 +1585,27 @@
         
         // Initialisation
         window.addEventListener('DOMContentLoaded', () => {
-            statusIndicator.textContent = "READY | SIMPLE DOWNLOAD MODE";
-            showNotification("Use TEST DOWNLOAD first to check file availability", "warning");
+            statusIndicator.textContent = "⚡ READY | ULTRA FAST MODE";
+            showNotification("⚡ Ultra Fast Mode activated! 5 concurrent downloads", "warning");
+            
+            // Raccourcis clavier
+            document.addEventListener('keydown', (e) => {
+                // Ctrl+Shift+D pour téléchargement rapide
+                if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                    e.preventDefault();
+                    document.getElementById('downloadZipBtn').click();
+                }
+                // Ctrl+Shift+T pour test rapide
+                if (e.ctrlKey && e.shiftKey && e.key === 'T') {
+                    e.preventDefault();
+                    document.getElementById('testDownloadBtn').click();
+                }
+                // Ctrl+Shift+A pour tout télécharger
+                if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+                    e.preventDefault();
+                    document.getElementById('downloadAllBtn').click();
+                }
+            });
         });
 
         // Optimisation mémoire
