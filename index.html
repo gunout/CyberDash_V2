@@ -220,7 +220,7 @@
         .yt-placeholder i { font-size: 50px; margin-bottom: 15px; opacity: 0.3; }
         
         .yt-player-container { width: 100%; height: 100%; position: relative; z-index: 10; }
-        .yt-player-container iframe { width: 100%; height: 100%; border: none; }
+        .yt-player-container iframe { width: 100%; height=100%; border: none; }
 
         .audio-player-ui {
             width: 100%; padding: 20px; text-align: center; color: var(--primary-cyan);
@@ -454,7 +454,6 @@
         function fixMojibake(str) {
             if (!str) return '';
             try {
-                // Gérer différents encodages problématiques
                 const encodings = [
                     { from: /Ã©/g, to: 'é' },
                     { from: /Ã¨/g, to: 'è' },
@@ -746,7 +745,7 @@
 
             async processBatch(batch, batchNumber, totalBatches) {
                 const results = {};
-                const promises = [];
+                const downloadTasks = [];
                 
                 for (const item of batch) {
                     const cacheKey = item.url;
@@ -757,45 +756,63 @@
                         continue;
                     }
                     
-                    promises.push(this.downloadFileWithRetry(item.url).then(blob => {
-                        if (blob && blob.size > 1024) {
-                            const finalPath = this.getFinalPath(item);
-                            results[finalPath] = blob;
-                            this.cache.set(cacheKey, blob);
-                            this.successCount++;
-                        } else {
+                    // Créer une fonction de tâche
+                    const task = async () => {
+                        try {
+                            const blob = await this.downloadFileWithRetry(item.url);
+                            if (blob && blob.size > 1024) {
+                                const finalPath = this.getFinalPath(item);
+                                results[finalPath] = blob;
+                                this.cache.set(cacheKey, blob);
+                                this.successCount++;
+                            } else {
+                                this.failedCount++;
+                            }
+                        } catch (error) {
+                            console.warn(`Failed to download ${item.name}:`, error.message);
                             this.failedCount++;
+                        } finally {
+                            this.processedFiles++;
+                            this.updateProgress(batchNumber, totalBatches);
                         }
-                    }).catch(error => {
-                        console.warn(`Failed to download ${item.name}:`, error.message);
-                        this.failedCount++;
-                    }).finally(() => {
-                        this.processedFiles++;
-                        this.updateProgress(batchNumber, totalBatches);
-                    }));
+                    };
+                    
+                    downloadTasks.push(task);
                 }
                 
-                await this.runWithConcurrencyLimit(promises, this.maxConcurrentDownloads);
+                // Exécuter les tâches avec limitation de concurrence
+                await this.runWithConcurrencyLimit(downloadTasks, this.maxConcurrentDownloads);
+                
                 return results;
             }
 
             async runWithConcurrencyLimit(tasks, limit) {
-                const results = [];
                 const executing = [];
+                const results = [];
                 
                 for (const task of tasks) {
-                    const p = Promise.resolve().then(() => task());
+                    // Vérifier si on doit arrêter
+                    if (!this.isProcessing) {
+                        break;
+                    }
+                    
+                    // Créer une promesse pour la tâche
+                    const p = task().then(result => {
+                        executing.splice(executing.indexOf(p), 1);
+                        return result;
+                    });
+                    
                     results.push(p);
+                    executing.push(p);
                     
-                    const e = p.then(() => executing.splice(executing.indexOf(e), 1));
-                    executing.push(e);
-                    
+                    // Si on a atteint la limite, attendre qu'une tâche se termine
                     if (executing.length >= limit) {
                         await Promise.race(executing);
                     }
                 }
                 
-                return Promise.all(results);
+                // Attendre que toutes les tâches en cours soient terminées
+                await Promise.all(executing);
             }
 
             getFinalPath(item) {
