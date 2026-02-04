@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BEATSTREET CYBERDASH - Proxy V3 & Direct Mode</title>
+    <title>BEATSTREET CYBERDASH - Manual DL Fix</title>
     
     <!-- JSZip -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -268,12 +268,56 @@
         .scan-log .warning { color: #ffff00; }
         .scan-log .info { color: #00ffff; }
 
+        /* Settings Group */
+        .settings-group {
+            margin: 15px 0;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #333;
+            text-align: left;
+        }
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .settings-row:last-child { margin-bottom: 0; }
+        .settings-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            flex: 1;
+            padding-right: 10px;
+        }
+        .settings-label small { display: block; opacity: 0.7; color: #666; }
+
+        /* Custom Radio */
+        .radio-group { display: flex; gap: 10px; }
+        .radio-label {
+            cursor: pointer;
+            font-size: 11px;
+            padding: 5px 10px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #111;
+            color: #aaa;
+            transition: 0.2s;
+        }
+        .radio-label:hover { color: #fff; border-color: var(--primary-cyan); }
+        .radio-input { display: none; }
+        .radio-input:checked + .radio-label {
+            background: var(--primary-cyan);
+            color: #000;
+            border-color: var(--primary-cyan);
+            font-weight: bold;
+        }
+
         /* Toggle Switch */
         .toggle-wrapper {
-            margin-top: 10px;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-end;
             gap: 10px;
             font-size: 12px;
             color: var(--text-secondary);
@@ -293,6 +337,32 @@
 
         .zip-bar-bg { width: 100%; height: 10px; background: #000; margin: 20px 0; }
         .zip-bar-fill { height: 100%; background: var(--primary-cyan); width: 0%; transition: width 0.1s linear; }
+
+        /* Manual Download Button */
+        .manual-dl-btn {
+            display: none;
+            width: 100%;
+            padding: 20px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            border: 2px solid var(--success-green);
+            background: rgba(0, 255, 102, 0.1);
+            color: var(--success-green);
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.3);
+            animation: pulse 2s infinite;
+        }
+        .manual-dl-btn:hover {
+            background: var(--success-green);
+            color: #000;
+            box-shadow: 0 0 30px rgba(0, 255, 102, 0.6);
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
 
         .toast-container {
             position: fixed; bottom: 30px; right: 30px; z-index: 5000;
@@ -321,10 +391,10 @@
 
     <div class="dashboard">
         <header class="header">
-            <div class="logo">BEATSTREET <span style="color:var(--primary-cyan)">PROXY V3</span></div>
+            <div class="logo">BEATSTREET <span style="color:var(--primary-cyan)">FIXED DL</span></div>
             <div class="status-bar">
                 <div class="status-item"><div class="status-dot"></div> ONLINE</div>
-                <div class="status-item"><div class="status-dot" style="background:#00ff00"></div> DIRECT/PROXY</div>
+                <div class="status-item"><div class="status-dot" style="background:#00ff00"></div> MANUAL DL</div>
             </div>
         </header>
 
@@ -420,18 +490,49 @@
     <!-- SCANNER OVERLAY -->
     <div class="overlay" id="scannerOverlay">
         <div class="overlay-box">
-            <h2 style="font-family:'Orbitron'; color:var(--primary-cyan);">RECURSIVE CRAWLER V3</h2>
+            <h2 style="font-family:'Orbitron'; color:var(--primary-cyan);">SMART SCANNER</h2>
             <input type="text" class="cyber-input" id="scanInput" value="https://icekolkut.website/music2709/ice%20cube%20-19%20albums-320kbps/" style="margin-top:20px;">
             
-            <!-- Mode Direct Toggle -->
-            <label class="toggle-wrapper">
-                <input type="checkbox" class="toggle-checkbox" id="directModeCheck">
-                <div class="toggle-slider"></div>
-                <div style="text-align:left;">
-                    <strong>DIRECT MODE (No Proxy)</strong><br>
-                    <small style="color:#666">Use with CORS Extension. Bypasses Cloudflare.</small>
+            <div class="settings-group">
+                <!-- Custom Proxy -->
+                <div class="settings-row" style="flex-direction:column; align-items:stretch;">
+                    <div class="settings-label">
+                        <strong style="color:var(--warning-orange)">CUSTOM PROXY URL</strong>
+                        <small>Paste a private CORS proxy URL here if public ones fail.</small>
+                    </div>
+                    <input type="text" class="cyber-input" id="customProxyInput" placeholder="https://my-proxy.com/?url=" style="margin-bottom:5px; border-color:var(--warning-orange);">
                 </div>
-            </label>
+
+                <div class="settings-row">
+                    <!-- Direct Mode -->
+                    <div class="settings-label">
+                        <strong style="color:var(--success-green)">DIRECT MODE (Recommended)</strong>
+                        <small>Disable CORS via Browser Extension.</small>
+                    </div>
+                    <label class="toggle-wrapper">
+                        <input type="checkbox" class="toggle-checkbox" id="directModeCheck">
+                        <div class="toggle-slider"></div>
+                    </label>
+                </div>
+
+                <!-- Scan Speed -->
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <strong>SCAN SPEED</strong>
+                        <small>Steady avoids server blocks.</small>
+                    </div>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="scanSpeed" value="fast" class="radio-input">
+                            <span class="radio-label">FAST</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="scanSpeed" value="steady" checked class="radio-input">
+                            <span class="radio-label">STEADY</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
 
             <div class="scan-log" id="scanLog">> System ready...</div>
             <div style="margin-top:15px;">
@@ -447,7 +548,13 @@
     <!-- ZIP PROGRESS OVERLAY -->
     <div class="overlay" id="zipOverlay">
         <div class="overlay-box" style="width: 600px;">
-            <h2 style="font-family:'Orbitron'; color:var(--primary-cyan); margin-bottom:15px;">⚡ WORKER PROCESSING</h2>
+            <h2 style="font-family:'Orbitron'; color:var(--primary-cyan); margin-bottom:15px;">⚡ ARCHIVE GENERATOR</h2>
+            
+            <!-- Manual Download Button (Hidden initially) -->
+            <button class="cyber-btn manual-dl-btn" id="manualDlBtn">
+                <i class="fas fa-download"></i> CLICK TO DOWNLOAD ZIP
+            </button>
+
             <div id="zipStatusText">Initializing Worker...</div>
             <div class="zip-bar-bg">
                 <div class="zip-bar-fill" id="zipProgressBar"></div>
@@ -456,6 +563,9 @@
             <div style="margin-top:15px;">
                 <button class="cyber-btn" id="cancelZipBtn" style="background:rgba(255,0,0,0.1); border-color:red; color:red;">
                     <i class="fas fa-stop"></i> CANCEL
+                </button>
+                <button class="cyber-btn" id="closeZipBtn" style="background:rgba(255,255,255,0.1); border-color:#fff; color:#fff; display:none;">
+                    <i class="fas fa-times"></i> CLOSE
                 </button>
             </div>
         </div>
@@ -607,11 +717,41 @@
                     document.getElementById('zipStatusText').innerHTML = `${text}<br><small>${processed}/${total} • ✅${success} • ❌${failed}</small>`;
                     document.getElementById('zipSpeedInfo').textContent = `Processing ${processed} files...`;
                 } else if (type === 'done') {
+                    // --- MANUAL DOWNLOAD FIX ---
+                    // Create a download URL for the blob
                     const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a'); link.href = url; link.download = `Beatstreet_${new Date().toISOString().slice(0,10)}.zip`;
-                    document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
-                    this.cleanup();
-                    showNotification(`✅ COMPLETE! ${success} files downloaded.`, 'success');
+                    const sizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+                    const fileName = `Beatstreet_${new Date().toISOString().slice(0,10)}_${success}_files.zip`;
+
+                    // 1. Update UI to show Success and Size
+                    document.getElementById('zipStatusText').innerHTML = `✅ SUCCESS! <br>Archive Size: <strong>${sizeMB} MB</strong>`;
+                    
+                    // 2. Show the Manual Download Button
+                    const manualBtn = document.getElementById('manualDlBtn');
+                    manualBtn.style.display = 'block';
+                    
+                    // 3. Bind click event to force download
+                    manualBtn.onclick = () => {
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        setTimeout(() => { document.body.removeChild(link); }, 100);
+                        showNotification("Downloading ZIP file...", "success");
+                    };
+
+                    // 4. Try automatic click just in case (with a delay)
+                    setTimeout(() => {
+                        manualBtn.click();
+                    }, 500);
+
+                    // 5. Update Overlay Buttons (Hide Cancel, Show Close)
+                    document.getElementById('cancelZipBtn').style.display = 'none';
+                    document.getElementById('closeZipBtn').style.display = 'inline-block';
+
+                    // Don't auto-close overlay. Let user see the success.
+                    this.isBusy = false; 
                 } else if (type === 'cancelled' || type === 'error') {
                     showNotification(type==='cancelled' ? 'Download cancelled' : `❌ Error: ${message}`, type==='cancelled'?'info':'error');
                     this.cleanup();
@@ -622,16 +762,27 @@
                 const items = isTest ? files.slice(0, 10) : files;
                 const cleanItems = items.map(item => ({ url: item.url, name: item.name, path: item.path || '' }));
                 this.isBusy = true;
+                
+                // Reset Overlay State
                 document.getElementById('zipOverlay').style.display = 'flex';
                 document.getElementById('zipProgressBar').style.width = '0%';
+                document.getElementById('manualDlBtn').style.display = 'none';
                 document.getElementById('cancelZipBtn').style.display = 'inline-block';
+                document.getElementById('closeZipBtn').style.display = 'none';
+                
                 this.worker.postMessage({ action: 'start', payload: { files: cleanItems, concurrency: 8 } });
             }
             cancel() { if (this.worker) this.worker.postMessage({ action: 'cancel' }); }
-            cleanup() { this.isBusy = false; document.getElementById('zipOverlay').style.display = 'none'; document.getElementById('cancelZipBtn').style.display = 'none'; }
+            cleanup() { 
+                this.isBusy = false; 
+                document.getElementById('zipOverlay').style.display = 'none'; 
+            }
         }
         const zipManager = new ZipWorkerManager();
         document.getElementById('cancelZipBtn').onclick = () => zipManager.cancel();
+        document.getElementById('closeZipBtn').onclick = () => {
+            document.getElementById('zipOverlay').style.display = 'none';
+        };
 
         // --- PLAYER ---
         class SmartYouTubePlayer {
@@ -708,25 +859,22 @@
         }
         function extractYTId(url) { const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i; const match = url.match(reg); return match ? match[1] : null; }
 
-        // --- ADVANCED SCANNER LOGIC (V3) ---
+        // --- ULTIMATE SCANNER LOGIC ---
         window.openScanner = () => document.getElementById('scannerOverlay').style.display = 'flex';
         window.closeScanner = () => document.getElementById('scannerOverlay').style.display = 'none';
 
-        // Liste de proxys réorganisée (Codetabs en premier pour les serveurs bloquant le reste)
         const SCAN_PROXIES = [
-            (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`, // AWS IP, robuste
-            (u) => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(u)}`, // Bon fallback
             (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+            (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
             (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`
         ];
 
-        async function fetchContent(url, useDirect) {
+        async function fetchContent(url, useDirect, customProxyUrl) {
             const log = document.getElementById('scanLog');
             
-            // 1. Tentative DIRECT (Mode Hack)
             if (useDirect) {
                 try {
-                    log.innerHTML += `<div class="info">Trying DIRECT request (Requires CORS Extension)...</div>`;
+                    log.innerHTML += `<div class="info">Trying DIRECT request (Extension Required)...</div>`;
                     log.scrollTop = log.scrollHeight;
                     const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
                     if (response.ok) {
@@ -734,25 +882,57 @@
                         if(text.length > 200 && (text.includes('<html') || text.includes('<body'))) return text;
                         throw new Error("Direct response too small or invalid");
                     }
-                    throw new Error(`Direct request blocked (HTTP ${response.status})`);
+                    throw new Error(`Direct blocked (HTTP ${response.status})`);
                 } catch (err) {
-                    log.innerHTML += `<div class="error">Direct Mode Failed: ${err.message}</div>`;
+                    log.innerHTML += `<div class="error">Direct Failed: ${err.message}</div>`;
                     log.scrollTop = log.scrollHeight;
-                    // Si le direct échoue, on continue normalement avec les proxies
                 }
             }
 
-            // 2. Tentative via Proxies
-            for (let i = 0; i < SCAN_PROXIES.length; i++) {
-                const proxyUrl = SCAN_PROXIES[i](url);
+            if (customProxyUrl && customProxyUrl.trim() !== "") {
+                try {
+                    const finalUrl = customProxyUrl.includes('?') ? `${customProxyUrl}${encodeURIComponent(url)}` : `${customProxyUrl}/${encodeURIComponent(url)}`;
+                    const proxyName = "CUSTOM PROXY";
+                    
+                    log.innerHTML += `<div class="warning">Trying: ${proxyName}...</div>`;
+                    log.scrollTop = log.scrollHeight;
+
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 15000); 
+
+                    const response = await fetch(finalUrl, {
+                        signal: controller.signal,
+                        headers: { 'Accept': 'text/html,application/xhtml+xml' } 
+                    });
+
+                    clearTimeout(timeoutId);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const text = await response.text();
+                    if (text.length < 200) throw new Error("Empty response");
+                    if (!text.includes('<html') && !text.includes('<HTML') && !text.includes('<body')) throw new Error("Not HTML");
+                    return text; 
+                } catch (err) {
+                    log.innerHTML += `<div class="error">Custom Proxy Failed: ${err.message}</div>`;
+                    log.scrollTop = log.scrollHeight;
+                }
+            }
+
+            const PUBLIC_PROXIES = [
+                (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+                (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+                (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`
+            ];
+
+            for (let i = 0; i < PUBLIC_PROXIES.length; i++) {
+                const proxyUrl = PUBLIC_PROXIES[i](url);
                 const proxyName = proxyUrl.split('//')[1].split('/')[0];
                 
-                if(log) log.innerHTML += `<div class="warning">Trying Proxy: ${proxyName}...</div>`;
+                if(log) log.innerHTML += `<div class="warning">Trying: ${proxyName}...</div>`;
                 log.scrollTop = log.scrollHeight;
 
                 try {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 15000); 
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); 
 
                     const response = await fetch(proxyUrl, {
                         signal: controller.signal,
@@ -762,28 +942,25 @@
                     clearTimeout(timeoutId);
 
                     if (!response.ok) {
-                        if(response.status === 403) {
-                            throw new Error(`CLOUDFLARE/BLOCK (403) - Proxy blacklisted.`);
-                        }
+                        if(response.status === 403) throw new Error(`CLOUDFLARE BLOCK (403)`);
                         throw new Error(`HTTP ${response.status}`);
                     }
 
                     const text = await response.text();
-
                     if (text.length < 200) throw new Error("Empty response");
                     if (!text.includes('<html') && !text.includes('<HTML') && !text.includes('<body')) throw new Error("Not HTML");
 
                     return text; // Succès
 
                 } catch (err) {
-                    console.warn(`Proxy ${i+1} failed:`, err);
+                    console.warn(`Proxy failed:`, err);
                     if(log) log.innerHTML += `<div class="error">Failed: ${err.message}</div>`;
                     log.scrollTop = log.scrollHeight;
                     continue;
                 }
             }
             
-            throw new Error("All methods failed. Target likely blocks proxies.");
+            throw new Error("All methods failed. Server is blocking proxies.");
         }
 
         let isScanning = false;
@@ -792,6 +969,12 @@
             if(!startUrl) return;
 
             const isDirect = document.getElementById('directModeCheck').checked;
+            const customProxy = document.getElementById('customProxyInput').value;
+            const speedMode = document.querySelector('input[name="scanSpeed"]:checked').value;
+
+            const isSteady = speedMode === 'steady';
+            const baseDelay = isSteady ? 2000 : 200;
+            const jitter = isSteady ? 500 : 100;
 
             isScanning = true;
             document.getElementById('startScanBtn').style.display = 'none';
@@ -815,7 +998,8 @@
                 const basePath = baseUrlObj.pathname;
 
                 l(`Starting Scan: ${baseUrl}`);
-                l(`Mode: ${isDirect ? 'DIRECT (Extension Required)' : 'PROXY ROTATION'}`);
+                l(`Mode: ${isSteady ? 'STEADY (Safe)' : 'FAST (Risky)'} - Delay: ~${baseDelay}ms`);
+                if(isDirect) l(`Direct Mode: ON (Requires Extension)`);
                 
                 const queue = [{ url: baseUrl, depth: 0 }];
                 const visited = new Set();
@@ -829,7 +1013,6 @@
 
                     const currentUrlObj = new URL(url);
                     if (!currentUrlObj.pathname.startsWith(basePath)) {
-                        l(`Skipped (Outside root): ${url}`, 'warning');
                         continue;
                     }
 
@@ -837,7 +1020,7 @@
                     l(`Scanning: ${relativePath || '/'} (Depth: ${depth})`);
 
                     try {
-                        const html = await fetchContent(url, isDirect);
+                        const html = await fetchContent(url, isDirect, customProxy);
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(html, 'text/html');
                         const links = Array.from(doc.querySelectorAll('a[href]'));
@@ -865,7 +1048,8 @@
                             } catch(e) { }
                         });
                         
-                        await new Promise(r => setTimeout(r, 200)); 
+                        const randomDelay = baseDelay + Math.random() * jitter;
+                        await new Promise(r => setTimeout(r, randomDelay)); 
 
                     } catch(e) {
                         l(`Error scanning folder: ${e.message}`, 'error');
@@ -920,7 +1104,7 @@
         };
 
         window.addEventListener('DOMContentLoaded', () => { 
-            showNotification("Proxy V3 loaded. Use Direct Mode + Extension for best results.", "info"); 
+            showNotification("Manual Download Feature Active.", "success"); 
         });
     </script>
 </body>
