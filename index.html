@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BEATSTREET CYBERDASH - Selection Manager (OPTIMIZED)</title>
+    <title>BEATSTREET CYBERDASH - Fixed Scanner</title>
     
     <!-- JSZip -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -40,7 +40,6 @@
             overflow: hidden;
         }
 
-        /* Background Effects */
         .cyber-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index:1; }
         .particle {
             position: absolute; width: 2px; height: 2px; background: var(--primary-cyan);
@@ -59,7 +58,6 @@
             background-size: 40px 40px; pointer-events: none; z-index: 2;
         }
 
-        /* Layout */
         .dashboard {
             position: relative; z-index: 10;
             height: 100%;
@@ -69,7 +67,6 @@
             padding: 20px;
         }
 
-        /* Header */
         .header {
             background: rgba(0, 20, 30, 0.7); border: 1px solid var(--primary-cyan);
             border-radius: 10px; padding: 15px 25px; backdrop-filter: blur(15px);
@@ -85,7 +82,6 @@
         .status-item { color: var(--text-secondary); display: flex; align-items: center; gap: 5px; }
         .status-dot { width: 8px; height: 8px; background: var(--primary-cyan); border-radius: 50%; box-shadow: var(--glow-cyan); }
 
-        /* Main Content */
         .main-content {
             display: grid;
             grid-template-columns: 350px 1fr 250px;
@@ -93,7 +89,6 @@
             min-height: 0; 
         }
 
-        /* Panels */
         .panel {
             background: var(--bg-panel); border: 1px solid var(--dark-cyan);
             border-radius: 10px; padding: 15px; backdrop-filter: blur(10px);
@@ -109,7 +104,6 @@
             display: flex; justify-content: space-between; align-items: center;
         }
 
-        /* Bouton Select All */
         .select-all-btn {
             background: transparent; border: 1px solid var(--primary-cyan);
             color: var(--primary-cyan); padding: 4px 10px; border-radius: 4px;
@@ -119,7 +113,6 @@
         .select-all-btn:hover { background: rgba(0, 255, 255, 0.1); box-shadow: 0 0 10px var(--primary-cyan); }
         .select-all-btn i { font-size: 10px; }
 
-        /* Playlist Container */
         .playlist-container {
             flex: 1; overflow-y: auto; overflow-x: hidden; margin-bottom: 15px; padding-right: 5px;
         }
@@ -128,7 +121,6 @@
         .playlist-container::-webkit-scrollbar-thumb { background: var(--dark-cyan); border-radius: 5px; border: 1px solid rgba(0,0,0,0.2); }
         .playlist-container::-webkit-scrollbar-thumb:hover { background: var(--primary-cyan); box-shadow: 0 0 10px var(--primary-cyan); }
 
-        /* Playlist Item */
         .playlist-item {
             background: rgba(0,255,255, 0.03); border-left: 3px solid var(--dark-cyan);
             padding: 10px; margin-bottom: 5px; cursor: pointer; transition: all 0.2s;
@@ -172,7 +164,6 @@
             display: flex; align-items: center; gap: 8px;
         }
 
-        /* Action Buttons */
         .action-btn {
             border: none; color: #000; padding: 10px; border-radius: 5px;
             font-family: 'Orbitron'; font-weight: 700; cursor: pointer; text-transform: uppercase;
@@ -183,14 +174,11 @@
         .download-zip-btn { background: linear-gradient(45deg, var(--primary-cyan), var(--accent-blue)); box-shadow: var(--glow-cyan); }
         .download-zip-btn:hover { transform: translateY(-2px); box-shadow: var(--glow-strong); }
         .download-zip-btn small { font-size: 10px; opacity: 0.8; }
-
         .test-download-btn { background: linear-gradient(45deg, var(--warning-orange), #ff6600); box-shadow: 0 0 10px rgba(255, 153, 0, 0.6); }
         .test-download-btn:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(255, 153, 0, 0.8); }
-
         .download-all-btn { background: linear-gradient(45deg, var(--purple), #cc00cc); box-shadow: 0 0 10px rgba(255, 0, 255, 0.6); }
         .download-all-btn:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(255, 0, 255, 0.8); }
 
-        /* Center Media Deck */
         .media-deck { flex: 1; display: flex; flex-direction: column; }
         .deck-input-group { display: flex; gap: 10px; margin-bottom: 15px; }
         .cyber-input {
@@ -262,7 +250,6 @@
         .mp3-action-btn.show { display: block; }
         .mp3-action-btn:hover { background: #ff0000; color: #fff; }
 
-        /* Scanner & Zip Overlays */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 3000;
@@ -276,13 +263,12 @@
             font-family: monospace; font-size: 11px; text-align: left; padding: 10px;
             border: 1px solid var(--dark-cyan); margin-top: 15px;
         }
-        .scan-log .depth-1 { color: #00ffff; }
         .scan-log .found { color: #ff00ff; font-weight: bold; }
         .scan-log .error { color: #ff0000; }
+        .scan-log .warning { color: #ffff00; }
         .zip-bar-bg { width: 100%; height: 10px; background: #000; margin: 20px 0; }
         .zip-bar-fill { height: 100%; background: var(--primary-cyan); width: 0%; transition: width 0.1s linear; }
 
-        /* Custom Toast Notification */
         .toast-container {
             position: fixed; bottom: 30px; right: 30px; z-index: 5000;
             display: flex; flex-direction: column; gap: 10px;
@@ -300,58 +286,24 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideOut { to { transform: translateX(100%); opacity: 0; } }
 
-        /* Download Mode Dialog Styles */
-        .mode-btn {
-            border: none;
-            color: #000;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: 'Orbitron', monospace;
-            font-weight: 700;
-            cursor: pointer;
-            text-transform: uppercase;
-            font-size: 12px;
-            transition: all 0.3s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            gap: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
-            margin-bottom: 10px;
-        }
-        .mode-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-        .mode-btn small {
-            font-size: 10px;
-            opacity: 0.9;
-            font-weight: normal;
-            text-transform: none;
-        }
-
         @media(max-width: 900px) { .main-content { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="cyber-bg" id="cyberBg"></div>
     <div class="grid-overlay"></div>
-    <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
     <div class="dashboard">
         <header class="header">
-            <div class="logo">BEATSTREET <span style="color:var(--primary-cyan)">OPTIMIZED</span></div>
+            <div class="logo">BEATSTREET <span style="color:var(--primary-cyan)">FIXED SCAN</span></div>
             <div class="status-bar">
                 <div class="status-item"><div class="status-dot"></div> ONLINE</div>
-                <div class="status-item"><div class="status-dot" style="background:#00ff00"></div> ⚡ WEB WORKER ACTIVE</div>
+                <div class="status-item"><div class="status-dot" style="background:#00ff00"></div> ⚡ PROXY V2</div>
             </div>
         </header>
 
         <main class="main-content">
-            <!-- Playlist Panel -->
             <section class="panel">
                 <div class="panel-title">
                     <span id="playlistTitle">DATA STREAM [0/0]</span>
@@ -377,7 +329,6 @@
                 </button>
             </section>
 
-            <!-- Media Deck Panel -->
             <section class="panel media-deck">
                 <div class="deck-input-group">
                     <input type="text" class="cyber-input" id="urlInput" placeholder="ENTER YOUTUBE URL OR MP3 LINK...">
@@ -389,7 +340,6 @@
                     <div class="corner-decor br"></div>
                     <div class="scanlines"></div>
 
-                    <!-- Mode 1: YouTube -->
                     <div class="screen-content active" id="ytScreen">
                         <div class="yt-placeholder" id="ytPlaceholder">
                             <i class="fab fa-youtube"></i><br>READY TO PLAY
@@ -397,7 +347,6 @@
                         <div class="yt-player-container" id="ytPlayerContainer"></div>
                     </div>
 
-                    <!-- Mode 2: Audio -->
                     <div class="screen-content" id="audioScreen">
                         <div class="audio-player-ui">
                             <div class="audio-info-title" id="audioTitle">NO TRACK</div>
@@ -418,7 +367,7 @@
                     <div class="bar-left">
                         <span id="modeIndicator">MODE: YOUTUBE</span>
                         <br>
-                        <span id="statusIndicator" style="color:var(--primary-cyan)">⚡ READY | WORKER MODE</span>
+                        <span id="statusIndicator" style="color:var(--primary-cyan)">⚡ READY</span>
                     </div>
                     <div class="bar-controls">
                         <button class="icon-btn" id="prevBtn"><i class="fas fa-step-backward"></i></button>
@@ -429,7 +378,6 @@
                 </div>
             </section>
 
-            <!-- Settings -->
             <section class="panel">
                 <div class="panel-title">CONTROLS</div>
                 <div style="margin-top:auto; text-align:center;">
@@ -447,7 +395,7 @@
     <!-- SCANNER OVERLAY -->
     <div class="overlay" id="scannerOverlay">
         <div class="overlay-box">
-            <h2 style="font-family:'Orbitron'; color:var(--primary-cyan);">RECURSIVE CRAWLER</h2>
+            <h2 style="font-family:'Orbitron'; color:var(--primary-cyan);">RECURSIVE CRAWLER (FIXED)</h2>
             <input type="text" class="cyber-input" id="scanInput" value="http://hoj-clan.fr/Music/Skid%20Row/" style="margin-top:20px;">
             <div class="scan-log" id="scanLog">> System ready...</div>
             <div style="margin-top:15px;">
@@ -477,21 +425,14 @@
         </div>
     </div>
 
-    <!-- SCRIPT -->
     <script>
-        // --- NOTIFICATION SYSTEM ---
+        // --- NOTIFICATIONS ---
         function showNotification(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            
-            let icon = 'fa-info-circle';
-            if(type === 'success') icon = 'fa-check-circle';
-            if(type === 'error') icon = 'fa-exclamation-triangle';
-            if(type === 'warning') icon = 'fa-exclamation-circle';
-            
+            let icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle');
             toast.innerHTML = `<i class="fas ${icon}"></i> <span>${message}</span>`;
-            
             container.appendChild(toast);
             setTimeout(() => {
                 toast.style.animation = 'slideOut 0.3s forwards';
@@ -499,21 +440,19 @@
             }, 4000);
         }
 
-        // --- ENCODING FIX ---
+        // --- ENCODING ---
         function fixMojibake(str) {
             if (!str) return '';
-            try {
-                const encodings = [
-                    { from: /Ã©/g, to: 'é' }, { from: /Ã¨/g, to: 'è' }, { from: /Ã¢/g, to: 'â' },
-                    { from: /Ã´/g, to: 'ô' }, { from: /Ã¹/g, to: 'ù' }, { from: /Ãª/g, to: 'ê' },
-                    { from: /Ã®/g, to: 'î' }, { from: /Ã«/g, to: 'ë' }, { from: /Ã¯/g, to: 'ï' },
-                    { from: /Ã /g, to: 'à' }, { from: /Ã§/g, to: 'ç' }, { from: /â€™/g, to: "'" },
-                    { from: /â€"/g, to: '"' }, { from: /â€“/g, to: '–' }, { from: /â€”/g, to: '—' }
-                ];
-                let result = str;
-                encodings.forEach(enc => result = result.replace(enc.from, enc.to));
-                return result;
-            } catch (e) { return str; }
+            const map = [
+                { from: /Ã©/g, to: 'é' }, { from: /Ã¨/g, to: 'è' }, { from: /Ã¢/g, to: 'â' },
+                { from: /Ã´/g, to: 'ô' }, { from: /Ã¹/g, to: 'ù' }, { from: /Ãª/g, to: 'ê' },
+                { from: /Ã®/g, to: 'î' }, { from: /Ã«/g, to: 'ë' }, { from: /Ã¯/g, to: 'ï' },
+                { from: /Ã /g, to: 'à' }, { from: /Ã§/g, to: 'ç' }, { from: /â€™/g, to: "'" },
+                { from: /â€"/g, to: '"' }, { from: /â€“/g, to: '–' }, { from: /â€”/g, to: '—' }
+            ];
+            let res = str;
+            map.forEach(m => res = res.replace(m.from, m.to));
+            return res;
         }
 
         // --- PARTICLES ---
@@ -524,7 +463,6 @@
             cyberBg.appendChild(p);
         }
 
-        // --- STATE ---
         let playlist = [];
         let selectedUids = new Set();
         let currentIndex = -1;
@@ -532,11 +470,8 @@
         let isSelectAll = false;
         let zipWorker = null;
 
-        // --- DOM ---
         const screens = { yt: document.getElementById('ytScreen'), audio: document.getElementById('audioScreen') };
         const urlInput = document.getElementById('urlInput');
-        const loadBtn = document.getElementById('loadBtn');
-        const modeIndicator = document.getElementById('modeIndicator');
         const statusIndicator = document.getElementById('statusIndicator');
         const playlistTitle = document.getElementById('playlistTitle');
         const selectedCountBadge = document.getElementById('selectedCountBadge');
@@ -547,432 +482,265 @@
         const audioTitle = document.getElementById('audioTitle');
         const audioPath = document.getElementById('audioPath');
         const mp3ActionBtn = document.getElementById('mp3ActionBtn');
-        const testDownloadBtn = document.getElementById('testDownloadBtn');
-        const downloadAllBtn = document.getElementById('downloadAllBtn');
 
-        // --- WEB WORKER SCRIPT ---
-        // Ce script s'exécute dans un thread séparé pour ne pas bloquer l'UI
+        // --- WEB WORKER ---
         const workerScript = `
         importScripts('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
-
         let zip = null;
         let isProcessing = false;
-        
-        // Liste de proxies CORS rotatifs
         const proxies = [
             (u) => \`https://corsproxy.io/?\${encodeURIComponent(u)}\`,
             (u) => \`https://api.allorigins.win/get?url=\${encodeURIComponent(u)}\`,
             (u) => \`https://api.codetabs.com/v1/proxy?quest=\${encodeURIComponent(u)}\`
         ];
 
-        // Nettoyage nom de fichier
         function cleanName(name) {
             let n = name.replace(/[<>:"|?*]/g, '_').replace(/\\\\/g, '-');
             if (!n.toLowerCase().endsWith('.mp3')) n += '.mp3';
-            return n.substring(0, 100); // Limite longueur
+            return n.substring(0, 100);
         }
 
         self.onmessage = async function(e) {
             const { action, payload } = e.data;
-
             if (action === 'start') {
                 isProcessing = true;
                 const { files, concurrency } = payload;
-                
                 zip = new JSZip();
-                let processed = 0;
-                let success = 0;
-                let failed = 0;
+                let processed = 0, success = 0, failed = 0;
                 const total = files.length;
-                
-                // Gestionnaire de progression pour le thread principal
-                const progress = (current, s, f, text) => {
-                    self.postMessage({ type: 'progress', processed: current, total, success: s, failed: f, text });
+                const progress = (c, s, f, t) => {
+                    self.postMessage({ type: 'progress', processed: c, total, success: s, failed: f, text: t });
                 };
-
                 progress(0, 0, 0, "Initializing worker...");
-
-                // Traitement par lots
                 for (let i = 0; i < total; i += concurrency) {
                     if (!isProcessing) break;
-                    
                     const chunk = files.slice(i, i + concurrency);
                     const promises = chunk.map(file => downloadFile(file, zip));
-                    
                     const results = await Promise.allSettled(promises);
-                    
-                    results.forEach(res => {
-                        if (res.status === 'fulfilled') success++;
-                        else failed++;
-                    });
-                    
+                    results.forEach(res => { if (res.status === 'fulfilled') success++; else failed++; });
                     processed += chunk.length;
                     progress(processed, success, failed, \`Downloading chunk \${Math.ceil(processed/concurrency)}...\`);
                 }
-
-                if (!isProcessing) {
-                    self.postMessage({ type: 'cancelled' });
-                    return;
-                }
-
+                if (!isProcessing) { self.postMessage({ type: 'cancelled' }); return; }
                 progress(total, success, failed, "Compressing archive (STORE mode)...");
-                
                 try {
-                    // Génération finale du ZIP (STORE = pas de compression = ultra rapide)
-                    const blob = await zip.generateAsync({
-                        type: "blob",
-                        compression: "STORE",
-                        platform: "UNIX"
-                    }, (metadata) => {
-                        // Progression interne de JSZip (si fichiers volumineux)
-                        if(metadata.percent) {
-                            self.postMessage({ type: 'zipping', percent: metadata.percent });
-                        }
-                    });
-
-                    self.postMessage({ type: 'done', blob: blob, success, failed });
-                } catch (err) {
-                    self.postMessage({ type: 'error', message: err.message });
-                }
+                    const blob = await zip.generateAsync({ type: "blob", compression: "STORE", platform: "UNIX" });
+                    self.postMessage({ type: 'done', blob, success, failed });
+                } catch (err) { self.postMessage({ type: 'error', message: err.message }); }
             }
-            
-            if (action === 'cancel') {
-                isProcessing = false;
-            }
+            if (action === 'cancel') { isProcessing = false; }
         };
 
         async function downloadFile(file, zip) {
-            // Tentative sur les proxies
             for (const proxyFn of proxies) {
                 if (!isProcessing) throw new Error("Cancelled");
-                
                 try {
                     const proxyUrl = proxyFn(file.url);
-                    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) }); // 10s timeout
-                    
+                    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
                     if (!res.ok) throw new Error(\`HTTP \${res.status}\`);
-                    
                     let blob;
-                    // Cas spécial pour allorigins qui renvoie du JSON
-                    if(proxyUrl.includes('allorigins')) {
-                        const json = await res.json();
-                        blob = base64ToBlob(json.contents);
-                    } else {
-                        blob = await res.blob();
-                    }
-
-                    if (blob.size < 5000) throw new Error("File too small"); // Fichier vide ou erreur HTML
-                    
-                    // Ajout au ZIP
+                    if(proxyUrl.includes('allorigins')) { const json = await res.json(); blob = base64ToBlob(json.contents); }
+                    else { blob = await res.blob(); }
+                    if (blob.size < 5000) throw new Error("File too small");
                     const path = file.path ? file.path + '/' + cleanName(file.name) : cleanName(file.name);
                     zip.file(path, blob);
                     return true;
-                } catch (e) {
-                    console.warn("Proxy failed, trying next...", e.message);
-                    continue; 
-                }
+                } catch (e) { continue; }
             }
             throw new Error("All proxies failed");
         }
-
-        // Helper pour allorigins
         function base64ToBlob(base64, type = 'audio/mpeg') {
-            const binStr = atob(base64);
-            const len = binStr.length;
-            const arr = new Uint8Array(len);
+            const binStr = atob(base64); const len = binStr.length; const arr = new Uint8Array(len);
             for (let i = 0; i < len; i++) arr[i] = binStr.charCodeAt(i);
             return new Blob([arr], { type: type });
         }
         `;
-
-        // Création du Worker depuis le Blob (Single File technique)
         const blob = new Blob([workerScript], { type: 'application/javascript' });
         const workerUrl = URL.createObjectURL(blob);
 
-        // --- ZIP MANAGER (INTERFACE AVEC LE WORKER) ---
         class ZipWorkerManager {
             constructor() {
                 this.worker = new Worker(workerUrl);
                 this.worker.onmessage = this.handleMessage.bind(this);
-                this.resolveMap = new Map();
                 this.isBusy = false;
             }
-
             handleMessage(e) {
                 const { type, blob, success, failed, processed, total, text, percent, message } = e.data;
-
                 if (type === 'progress') {
-                    this.updateUI(processed, total, success, failed, text);
-                } else if (type === 'zipping') {
-                    this.updateZipping(percent);
+                    document.getElementById('zipProgressBar').style.width = `${Math.round((processed/total)*100)}%`;
+                    document.getElementById('zipStatusText').innerHTML = `${text}<br><small>${processed}/${total} • ✅${success} • ❌${failed}</small>`;
+                    document.getElementById('zipSpeedInfo').textContent = `Processing ${processed} files...`;
                 } else if (type === 'done') {
-                    this.downloadBlob(blob);
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a'); link.href = url; link.download = `Beatstreet_${new Date().toISOString().slice(0,10)}.zip`;
+                    document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
                     this.cleanup();
-                    showNotification(\`✅ COMPLETE! \${success} files downloaded, \${failed} failed.\`, 'success');
-                } else if (type === 'cancelled') {
-                    showNotification('Download cancelled by user', 'info');
-                    this.cleanup();
-                } else if (type === 'error') {
-                    showNotification(\`❌ Error: \${message}\`, 'error');
+                    showNotification(`✅ COMPLETE! ${success} files downloaded.`, 'success');
+                } else if (type === 'cancelled' || type === 'error') {
+                    showNotification(type==='cancelled' ? 'Download cancelled' : `❌ Error: ${message}`, type==='cancelled'?'info':'error');
                     this.cleanup();
                 }
             }
-
-            updateUI(processed, total, success, failed, text) {
-                const percent = Math.round((processed / total) * 100);
-                document.getElementById('zipProgressBar').style.width = \`\${percent}%\`;
-                document.getElementById('zipStatusText').innerHTML = \`\${text}<br><small>\${processed}/\${total} • ✅\${success} • ❌\${failed}</small>\`;
-                
-                // Vitesse estimée (simple)
-                document.getElementById('zipSpeedInfo').textContent = \`Processing \${processed} files...\`;
-            }
-
-            updateZipping(percent) {
-                document.getElementById('zipProgressBar').style.width = \`\${percent}%\`;
-                document.getElementById('zipStatusText').textContent = \`Finalizing ZIP... \${Math.round(percent)}%\`;
-            }
-
-            downloadBlob(blob) {
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                const date = new Date().toISOString().slice(0,10);
-                link.download = \`Beatstreet_Optimized_\${date}.zip\`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            }
-
             start(files, isTest = false) {
                 if (this.isBusy) return;
-                
-                // Préparer les fichiers (nettoyage texte avant envoi)
                 const items = isTest ? files.slice(0, 10) : files;
-                const cleanItems = items.map(item => ({
-                    url: item.url,
-                    name: item.name, // Le worker fera le cleanName final pour la sécurité
-                    path: item.path || ''
-                }));
-
+                const cleanItems = items.map(item => ({ url: item.url, name: item.name, path: item.path || '' }));
                 this.isBusy = true;
                 document.getElementById('zipOverlay').style.display = 'flex';
                 document.getElementById('zipProgressBar').style.width = '0%';
                 document.getElementById('cancelZipBtn').style.display = 'inline-block';
-
-                this.worker.postMessage({
-                    action: 'start',
-                    payload: {
-                        files: cleanItems,
-                        concurrency: 8 // 8 téléchargements simultanés
-                    }
-                });
+                this.worker.postMessage({ action: 'start', payload: { files: cleanItems, concurrency: 8 } });
             }
-
-            cancel() {
-                if (this.worker) {
-                    this.worker.postMessage({ action: 'cancel' });
-                }
-            }
-
-            cleanup() {
-                this.isBusy = false;
-                document.getElementById('zipOverlay').style.display = 'none';
-                document.getElementById('cancelZipBtn').style.display = 'none';
-            }
+            cancel() { if (this.worker) this.worker.postMessage({ action: 'cancel' }); }
+            cleanup() { this.isBusy = false; document.getElementById('zipOverlay').style.display = 'none'; document.getElementById('cancelZipBtn').style.display = 'none'; }
         }
-
         const zipManager = new ZipWorkerManager();
-
         document.getElementById('cancelZipBtn').onclick = () => zipManager.cancel();
 
-
-        // --- YOUTUBE PLAYER ---
+        // --- PLAYER ---
         class SmartYouTubePlayer {
             playVideo(videoId, autoplay) {
-                ytPlaceholder.style.display = 'flex';
-                ytPlaceholder.innerHTML = `<i class="fab fa-youtube"></i><br>INITIALIZING...`;
-                
+                ytPlaceholder.style.display = 'flex'; ytPlaceholder.innerHTML = `<i class="fab fa-youtube"></i><br>INITIALIZING...`;
                 ytPlayerContainer.innerHTML = '';
                 const iframe = document.createElement('iframe');
-                // Utilisation de youtube-nocookie.com pour la stabilité
                 iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=${autoplay?1:0}&playsinline=1`;
                 iframe.style.width = '100%'; iframe.style.height = '100%'; iframe.style.border = 'none';
                 iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
                 ytPlayerContainer.appendChild(iframe);
-                
                 setTimeout(() => { ytPlaceholder.style.display = 'none'; statusIndicator.textContent = autoplay ? "PLAYING" : "READY"; }, 1000);
             }
-            stop() {
-                ytPlayerContainer.innerHTML = '';
-                ytPlaceholder.style.display = 'flex'; ytPlaceholder.innerHTML = `<i class="fab fa-youtube"></i><br>READY`;
-            }
+            stop() { ytPlayerContainer.innerHTML = ''; ytPlaceholder.style.display = 'flex'; ytPlaceholder.innerHTML = `<i class="fab fa-youtube"></i><br>READY`; }
         }
         const youtubePlayer = new SmartYouTubePlayer();
 
-        // --- PLAYBACK LOGIC ---
         function switchScreen(type) {
             Object.values(screens).forEach(s => s.classList.remove('active'));
-            if (type === 'youtube') {
-                screens.yt.classList.add('active');
-                modeIndicator.textContent = "MODE: YOUTUBE";
-                mp3ActionBtn.classList.add('show');
-            } else {
-                screens.audio.classList.add('active');
-                modeIndicator.textContent = "MODE: AUDIO STREAM";
-                mp3ActionBtn.classList.remove('show');
-            }
+            if (type === 'youtube') { screens.yt.classList.add('active'); document.getElementById('modeIndicator').textContent = "MODE: YOUTUBE"; mp3ActionBtn.classList.add('show'); }
+            else { screens.audio.classList.add('active'); document.getElementById('modeIndicator').textContent = "MODE: AUDIO STREAM"; mp3ActionBtn.classList.remove('show'); }
         }
 
         function playMedia(index) {
             if (index < 0 || index >= playlist.length) return;
-            currentIndex = index;
-            currentMediaItem = playlist[index];
-            renderPlaylist();
-
+            currentIndex = index; currentMediaItem = playlist[index]; renderPlaylist();
             if (currentMediaItem.type === 'youtube') {
                 switchScreen('youtube');
                 const id = extractYTId(currentMediaItem.url);
-                if(id) {
-                    youtubePlayer.playVideo(id, false);
-                    mp3ActionBtn.onclick = () => { window.open(\`https://www.y2mate.com/youtube/\${id}\`, '_blank'); };
-                }
+                if(id) { youtubePlayer.playVideo(id, false); mp3ActionBtn.onclick = () => { window.open(`https://www.y2mate.com/youtube/${id}`, '_blank'); }; }
             } else {
-                switchScreen('audio');
-                audioEl.src = currentMediaItem.url;
-                audioEl.play();
+                switchScreen('audio'); audioEl.src = currentMediaItem.url; audioEl.play();
                 audioTitle.textContent = fixMojibake(currentMediaItem.name);
                 audioPath.textContent = currentMediaItem.path ? fixMojibake(currentMediaItem.path) : "/";
-                statusIndicator.textContent = "PLAYING";
-                document.querySelector('#playPauseBtn i').className = 'fas fa-pause';
+                statusIndicator.textContent = "PLAYING"; document.querySelector('#playPauseBtn i').className = 'fas fa-pause';
             }
         }
-
-        loadBtn.addEventListener('click', () => {
-            const url = urlInput.value.trim();
-            if (!url) return;
-            if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                const id = extractYTId(url);
-                if (id) { addToPlaylist(url, \`YouTube: \${id}\`, 'youtube'); playMedia(playlist.length - 1); }
-            } else if (url.endsWith('.mp3')) {
-                const name = url.split('/').pop();
-                addToPlaylist(url, name, 'audio');
-                playMedia(playlist.length - 1);
-            } else {
-                document.getElementById('scanInput').value = url;
-                openScanner();
-            }
-        });
-
+        document.getElementById('loadBtn').onclick = () => {
+            const url = urlInput.value.trim(); if (!url) return;
+            if (url.includes('youtube.com') || url.includes('youtu.be')) { const id = extractYTId(url); if(id) { addToPlaylist(url, `YouTube: ${id}`, 'youtube'); playMedia(playlist.length-1); } }
+            else if (url.endsWith('.mp3')) { const name = url.split('/').pop(); addToPlaylist(url, name, 'audio'); playMedia(playlist.length-1); }
+            else { document.getElementById('scanInput').value = url; openScanner(); }
+        };
         document.getElementById('playPauseBtn').onclick = () => {
             const icon = document.querySelector('#playPauseBtn i');
-            if (currentMediaItem?.type === 'audio') {
-                if(audioEl.paused) { audioEl.play(); icon.className='fas fa-pause'; statusIndicator.textContent="PLAYING"; }
-                else { audioEl.pause(); icon.className='fas fa-play'; statusIndicator.textContent="PAUSED"; }
-            }
+            if (currentMediaItem?.type === 'audio') { if(audioEl.paused) { audioEl.play(); icon.className='fas fa-pause'; statusIndicator.textContent="PLAYING"; } else { audioEl.pause(); icon.className='fas fa-play'; statusIndicator.textContent="PAUSED"; } }
         };
-        document.getElementById('nextBtn').onclick = () => playMedia((currentIndex + 1) % playlist.length);
-        document.getElementById('prevBtn').onclick = () => playMedia((currentIndex - 1 + playlist.length) % playlist.length);
+        document.getElementById('nextBtn').onclick = () => playMedia((currentIndex+1)%playlist.length);
+        document.getElementById('prevBtn').onclick = () => playMedia((currentIndex-1+playlist.length)%playlist.length);
 
-        // --- PLAYLIST MANAGEMENT ---
-        function addToPlaylist(url, name, type, path = '') {
-            const uid = Date.now().toString(36) + Math.random().toString(36).substr(2);
-            playlist.push({ url, name, type, path, uid });
-            renderPlaylist();
+        function addToPlaylist(url, name, type, path='') {
+            const uid = Date.now().toString(36)+Math.random().toString(36).substr(2);
+            playlist.push({ url, name, type, path, uid }); renderPlaylist();
         }
-
-        function toggleSelection(uid) {
-            if (selectedUids.has(uid)) selectedUids.delete(uid); else selectedUids.add(uid);
-            updateSelectAllState(); renderPlaylist();
-        }
-
+        function toggleSelection(uid) { if(selectedUids.has(uid)) selectedUids.delete(uid); else selectedUids.add(uid); updateSelectAllState(); renderPlaylist(); }
         function updateSelectAllState() {
-            const allAudio = playlist.filter(i => i.type === 'audio');
-            const allSelected = allAudio.length > 0 && allAudio.every(item => selectedUids.has(item.uid));
-            isSelectAll = allSelected;
-            selectAllBtn.innerHTML = allSelected ? '<i class="fas fa-times"></i> DESELECT ALL' : '<i class="fas fa-check-double"></i> SELECT ALL AUDIO';
+            const allAudio = playlist.filter(i => i.type === 'audio'); const allSelected = allAudio.length > 0 && allAudio.every(item => selectedUids.has(item.uid));
+            isSelectAll = allSelected; selectAllBtn.innerHTML = allSelected ? '<i class="fas fa-times"></i> DESELECT ALL' : '<i class="fas fa-check-double"></i> SELECT ALL AUDIO';
         }
-
-        function deleteTrack(uid, e) {
-            if(e) e.stopPropagation();
-            playlist = playlist.filter(item => item.uid !== uid);
-            selectedUids.delete(uid);
-            updateSelectAllState(); renderPlaylist();
-        }
-
+        function deleteTrack(uid, e) { if(e) e.stopPropagation(); playlist = playlist.filter(item => item.uid !== uid); selectedUids.delete(uid); updateSelectAllState(); renderPlaylist(); }
         function renderPlaylist() {
-            const container = document.getElementById('playlistContainer');
-            container.innerHTML = '';
-            if(playlist.length === 0) {
-                container.innerHTML = '<div style="text-align:center; color:var(--text-secondary); padding:30px;">NO DATA</div>';
-                playlistTitle.textContent = "DATA STREAM [0/0]"; selectedCountBadge.textContent = "(0)"; return;
-            }
-
+            const container = document.getElementById('playlistContainer'); container.innerHTML = '';
+            if(playlist.length === 0) { container.innerHTML = '<div style="text-align:center; color:var(--text-secondary); padding:30px;">NO DATA</div>'; playlistTitle.textContent = "DATA STREAM [0/0]"; selectedCountBadge.textContent = "(0)"; return; }
             playlist.forEach((item, idx) => {
-                const div = document.createElement('div');
-                const isSelected = selectedUids.has(item.uid);
-                div.className = \`playlist-item \${idx === currentIndex ? 'active' : ''}\`;
-                
+                const div = document.createElement('div'); const isSelected = selectedUids.has(item.uid); div.className = `playlist-item ${idx===currentIndex?'active':''}`;
                 const displayName = fixMojibake(item.name);
                 let pathDisplay = '';
-                if (item.path && item.path !== '/') {
-                    const parts = fixMojibake(item.path).split('/').filter(p => p);
-                    pathDisplay = parts.join(' <i class="fas fa-chevron-right" style="font-size:8px; margin:0 2px;"></i> ');
-                }
-
-                div.innerHTML = \`
-                    <div class="cyber-check \${isSelected ? 'checked' : ''}" onclick="toggleSelection('\${item.uid}')"></div>
-                    <div class="track-info-wrapper">
-                        <div class="track-path">\${pathDisplay}</div>
-                        <div class="track-name">
-                            \${item.type === 'youtube' ? '<i class="fab fa-youtube" style="color:red"></i>' : '<i class="fas fa-music"></i>'} 
-                            \${displayName}
-                        </div>
-                    </div>
-                    <div class="delete-btn" onclick="deleteTrack('\${item.uid}', event)"><i class="fas fa-times"></i></div>
-                \`;
-                div.addEventListener('click', (e) => {
-                    if(!e.target.classList.contains('cyber-check') && !e.target.closest('.delete-btn')) playMedia(idx);
-                });
-                container.appendChild(div);
+                if (item.path && item.path !== '/') { const parts = fixMojibake(item.path).split('/').filter(p=>p); pathDisplay = parts.join(' <i class="fas fa-chevron-right" style="font-size:8px; margin:0 2px;"></i> '); }
+                div.innerHTML = `<div class="cyber-check ${isSelected?'checked':''}" onclick="toggleSelection('${item.uid}')"></div><div class="track-info-wrapper"><div class="track-path">${pathDisplay}</div><div class="track-name">${item.type==='youtube'?'<i class="fab fa-youtube" style="color:red"></i>':'<i class="fas fa-music"></i>'} ${displayName}</div></div><div class="delete-btn" onclick="deleteTrack('${item.uid}', event)"><i class="fas fa-times"></i></div>`;
+                div.addEventListener('click', (e) => { if(!e.target.classList.contains('cyber-check') && !e.target.closest('.delete-btn')) playMedia(idx); }); container.appendChild(div);
             });
-
             const audioCount = playlist.filter(i => i.type === 'audio').length;
-            playlistTitle.textContent = \`DATA STREAM [\${selectedUids.size}/\${audioCount}]\`;
-            selectedCountBadge.textContent = \`(\${selectedUids.size})\`;
+            playlistTitle.textContent = `DATA STREAM [${selectedUids.size}/${audioCount}]`; selectedCountBadge.textContent = `(${selectedUids.size})`;
         }
+        function extractYTId(url) { const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i; const match = url.match(reg); return match ? match[1] : null; }
 
-        function extractYTId(url) {
-            const reg = /(?:youtube\\.com\\/(?:[^\\/]+\\/.+\\/|(?:v|e(?:mbed)?)\\/|.*[?&]v=)|youtu\\.be\\/)([^"&?\\/\\s]{11})/i;
-            const match = url.match(reg);
-            return match ? match[1] : null;
-        }
-
-        // --- SCANNER ---
+        // --- FIXED SCANNER LOGIC ---
         window.openScanner = () => document.getElementById('scannerOverlay').style.display = 'flex';
         window.closeScanner = () => document.getElementById('scannerOverlay').style.display = 'none';
-        
-        const PROXIES = [
-            (u) => \`https://api.allorigins.win/get?url=\${encodeURIComponent(u)}\`,
-            (u) => \`https://corsproxy.io/?\${encodeURIComponent(u)}\`
+
+        // Liste de proxys améliorée avec endpoints RAW directs
+        const SCAN_PROXIES = [
+            // AllOrigins RAW (Direct text response, no JSON wrapper)
+            (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+            // CorsProxy.io (Très fiable)
+            (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+            // ThingProxy (Bon fallback)
+            (u) => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(u)}`
         ];
 
         async function fetchContent(url) {
-            for (const p of PROXIES) {
+            const log = document.getElementById('scanLog');
+            
+            for (let i = 0; i < SCAN_PROXIES.length; i++) {
+                const proxyUrl = SCAN_PROXIES[i](url);
+                
+                // Log visuel de la tentative
+                if(log) log.innerHTML += `<div class="warning">Trying Proxy ${i+1}/3...</div>`;
+                log.scrollTop = log.scrollHeight;
+
                 try {
-                    const res = await fetch(p(url));
-                    if(!res.ok) throw new Error(res.status);
-                    const json = await res.json();
-                    return json.contents;
-                } catch(e) { continue; }
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+                    const response = await fetch(proxyUrl, {
+                        signal: controller.signal,
+                        headers: { 'Accept': 'text/html,application/xhtml+xml' } // S'assurer d'avoir du texte
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const text = await response.text();
+
+                    // Vérifier si on a reçu du contenu HTML réel et non une page d'erreur du proxy
+                    if (text.length < 200) {
+                        throw new Error("Empty response (likely blocked)");
+                    }
+                    
+                    // Vérifier si c'est du HTML
+                    if (!text.includes('<html') && !text.includes('<HTML') && !text.includes('<body')) {
+                         throw new Error("Response is not HTML");
+                    }
+
+                    return text; // Succès
+
+                } catch (err) {
+                    console.warn(`Proxy ${i+1} failed:`, err);
+                    if(log) log.innerHTML += `<div class="error">Proxy ${i+1} Failed: ${err.message}</div>`;
+                    log.scrollTop = log.scrollHeight;
+                    continue; // Essayer le proxy suivant
+                }
             }
-            throw new Error("Proxy Access Denied");
+            
+            throw new Error("All proxies blocked or server is refusing connections.");
         }
 
         let isScanning = false;
         document.getElementById('startScanBtn').onclick = async () => {
             const startUrl = document.getElementById('scanInput').value.trim();
             if(!startUrl) return;
+
             isScanning = true;
             document.getElementById('startScanBtn').style.display = 'none';
             document.getElementById('stopScanBtn').style.display = 'inline-block';
@@ -989,55 +757,90 @@
             };
 
             try {
-                const baseUrl = new URL(startUrl.endsWith('/') ? startUrl : startUrl + '/');
-                const basePath = baseUrl.pathname;
-                const queue = [{ url: baseUrl.href, depth: 0 }];
+                // Normaliser l'URL (ajouter / à la fin si c'est un dossier)
+                let baseUrlObj = new URL(startUrl);
+                if (!baseUrlObj.pathname.endsWith('/')) {
+                    baseUrlObj.pathname += '/';
+                }
+                const baseUrl = baseUrlObj.href;
+                const basePath = baseUrlObj.pathname;
+
+                l(`Starting Scan: ${baseUrl}`);
+                const queue = [{ url: baseUrl, depth: 0 }];
                 const visited = new Set();
+                const maxDepth = 10;
 
                 while(queue.length > 0 && isScanning) {
                     const { url, depth } = queue.shift();
+                    
                     if(visited.has(url)) continue;
                     visited.add(url);
-                    if(!new URL(url).pathname.startsWith(basePath)) continue;
 
-                    l(\`Scanning: \${new URL(url).pathname} (Depth \${depth})\`);
+                    const currentUrlObj = new URL(url);
+                    // Sécurité: ne pas sortir de la racine du scan
+                    if (!currentUrlObj.pathname.startsWith(basePath)) {
+                        l(`Skipped (Outside root): ${url}`, 'warning');
+                        continue;
+                    }
+
+                    const relativePath = currentUrlObj.pathname.substring(basePath.length);
+                    l(`Scanning: ${relativePath || '/'} (Depth: ${depth})`);
+
                     try {
                         const html = await fetchContent(url);
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(html, 'text/html');
-                        
-                        doc.querySelectorAll('a[href]').forEach(link => {
+                        const links = Array.from(doc.querySelectorAll('a[href]'));
+
+                        links.forEach(link => {
                             const href = link.getAttribute('href');
+                            // Filtrage strict
                             if(!href || href.startsWith('#') || href.includes('?')) return;
-                            if(href === '../' || href.startsWith('../')) return;
+                            if(href === '../' || href.startsWith('../')) return; // Ignore Parent Directory
+                            if(href.startsWith('mailto:') || href.startsWith('javascript:')) return;
 
                             try {
-                                const resolved = new URL(href, url).href;
-                                if(!resolved.startsWith(baseUrl.origin)) return;
-                                if(!new URL(resolved).pathname.startsWith(basePath)) return;
+                                const resolvedUrl = new URL(href, url).href;
+                                const resolvedUrlObj = new URL(resolvedUrl);
+                                
+                                if(resolvedUrlObj.origin !== baseUrlObj.origin) return; // Domaine externe
+                                if(!resolvedUrlObj.pathname.startsWith(basePath)) return; // Hors racine
 
-                                if(resolved.endsWith('/')) {
-                                    if(depth < 8 && !visited.has(resolved)) queue.push({ url: resolved, depth: depth+1 });
-                                } else if(resolved.toLowerCase().endsWith('.mp3')) {
-                                    const name = resolved.split('/').pop();
-                                    const path = new URL(resolved).pathname.substring(basePath.length).replace(name,'');
-                                    addToPlaylist(resolved, name, 'audio', path);
-                                    l(\`  FOUND: \${name}\`, 'found');
+                                if(resolvedUrl.endsWith('/')) {
+                                    // C'est un dossier
+                                    if(depth < maxDepth && !visited.has(resolvedUrl)) {
+                                        queue.push({ url: resolvedUrl, depth: depth + 1 });
+                                    }
+                                } else if(resolvedUrl.toLowerCase().endsWith('.mp3')) {
+                                    // C'est un fichier MP3
+                                    const name = resolvedUrl.split('/').pop();
+                                    const path = resolvedUrlObj.pathname.substring(basePath.length).replace(name,'');
+                                    addToPlaylist(resolvedUrl, name, 'audio', path);
+                                    l(`  + FOUND: ${name}`, 'found');
                                 }
-                            } catch(e){}
+                            } catch(e) { /* Erreur d'URL ignorée */ }
                         });
-                    } catch(e) { l(\`Error: \${e.message}\`, 'error'); }
-                    await new Promise(r => setTimeout(r, 150)); // Politesse serveur
+                        
+                        // Petit délai pour ne pas saturer le proxy
+                        await new Promise(r => setTimeout(r, 200)); 
+
+                    } catch(e) {
+                        l(`Error scanning folder: ${e.message}`, 'error');
+                    }
                 }
-            } catch(e) { l(\`Critical Error: \${e.message}\`, 'error'); }
+            } catch(e) {
+                l(`Critical Scan Error: ${e.message}`, 'error');
+            }
             
-            if(!isScanning) l("STOPPED."); else l("SCAN COMPLETE.");
+            if(!isScanning) l("SCAN STOPPED BY USER.");
+            else l("SCAN COMPLETE.");
+            
             document.getElementById('startScanBtn').style.display = 'inline-block';
             document.getElementById('stopScanBtn').style.display = 'none';
             isScanning = false;
         };
         
-        document.getElementById('stopScanBtn').onclick = () => { isScanning = false; };
+        document.getElementById('stopScanBtn').onclick = () => { isScanning = false; l("Stopping...", 'warning'); };
 
         // --- GLOBAL ACTIONS ---
         document.getElementById('clearPlaylistBtn').onclick = () => {
@@ -1048,62 +851,32 @@
         };
 
         selectAllBtn.onclick = () => {
-            if (isSelectAll) {
-                selectedUids.clear();
-                showNotification("Deselected", "info");
-            } else {
-                playlist.forEach(item => { if(item.type === 'audio') selectedUids.add(item.uid); });
-                showNotification(\`Selected \${selectedUids.size} files\`, "success");
-            }
-            isSelectAll = !isSelectAll;
-            updateSelectAllState(); renderPlaylist();
+            if (isSelectAll) { selectedUids.clear(); showNotification("Deselected", "info"); }
+            else { playlist.forEach(item => { if(item.type === 'audio') selectedUids.add(item.uid); }); showNotification(`Selected ${selectedUids.size} files`, "success"); }
+            isSelectAll = !isSelectAll; updateSelectAllState(); renderPlaylist();
         };
 
-        // Fonction générique pour lancer le téléchargement
         async function startDownloadProcess(isTest = false) {
             let audioItems = [];
             if (isTest) {
-                 // Test utilise les sélectionnés, ou les 10 premiers si rien de sélectionné
-                 if(selectedUids.size === 0) {
-                    audioItems = playlist.filter(i => i.type === 'audio').slice(0, 10);
-                 } else {
-                    audioItems = playlist.filter(i => selectedUids.has(i.uid) && i.type === 'audio').slice(0, 10);
-                 }
+                 if(selectedUids.size === 0) audioItems = playlist.filter(i => i.type === 'audio').slice(0, 10);
+                 else audioItems = playlist.filter(i => selectedUids.has(i.uid) && i.type === 'audio').slice(0, 10);
             } else {
-                if (selectedUids.size === 0 && !isTest) {
-                    showNotification("Please select files first.", "warning");
-                    return;
-                }
+                if (selectedUids.size === 0) { showNotification("Please select files first.", "warning"); return; }
                 audioItems = playlist.filter(i => selectedUids.has(i.uid) && i.type === 'audio');
             }
-
-            if (audioItems.length === 0) {
-                showNotification("No audio files found.", "error");
-                return;
-            }
-            
+            if (audioItems.length === 0) { showNotification("No audio files found.", "error"); return; }
             zipManager.start(audioItems, isTest);
         }
 
         document.getElementById('downloadZipBtn').onclick = () => startDownloadProcess(false);
         document.getElementById('testDownloadBtn').onclick = () => startDownloadProcess(true);
-        
         downloadAllBtn.onclick = () => {
-            selectedUids.clear();
-            playlist.forEach(item => { if(item.type === 'audio') selectedUids.add(item.uid); });
-            isSelectAll = true;
-            renderPlaylist();
-            startDownloadProcess(false);
+            selectedUids.clear(); playlist.forEach(item => { if(item.type === 'audio') selectedUids.add(item.uid); });
+            isSelectAll = true; renderPlaylist(); startDownloadProcess(false);
         };
 
-        // Init
-        window.addEventListener('DOMContentLoaded', () => {
-            showNotification("⚡ Worker Ready. Interface Unblocked.", "success");
-            // Raccourcis
-            document.addEventListener('keydown', (e) => {
-                if(e.ctrlKey && e.key === 'd') { e.preventDefault(); startDownloadProcess(false); }
-            });
-        });
+        window.addEventListener('DOMContentLoaded', () => { showNotification("Scanner Fixed. Using RAW Proxies.", "success"); });
     </script>
 </body>
 </html>
