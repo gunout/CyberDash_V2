@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BEATSTREET CYBERDASH - Fixed Scanner</title>
+    <title>BEATSTREET CYBERDASH - Proxy V3 & Direct Mode</title>
     
     <!-- JSZip -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -266,6 +266,31 @@
         .scan-log .found { color: #ff00ff; font-weight: bold; }
         .scan-log .error { color: #ff0000; }
         .scan-log .warning { color: #ffff00; }
+        .scan-log .info { color: #00ffff; }
+
+        /* Toggle Switch */
+        .toggle-wrapper {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .toggle-checkbox { display: none; }
+        .toggle-slider {
+            width: 34px; height: 18px; background-color: #333; border-radius: 10px; position: relative; transition: 0.3s;
+            border: 1px solid var(--dark-cyan);
+        }
+        .toggle-slider:before {
+            content: ""; position: absolute; height: 10px; width: 10px; left: 4px; bottom: 3px;
+            background-color: white; border-radius: 50%; transition: 0.3s;
+        }
+        .toggle-checkbox:checked + .toggle-slider { background-color: var(--success-green); }
+        .toggle-checkbox:checked + .toggle-slider:before { transform: translateX(16px); }
+
         .zip-bar-bg { width: 100%; height: 10px; background: #000; margin: 20px 0; }
         .zip-bar-fill { height: 100%; background: var(--primary-cyan); width: 0%; transition: width 0.1s linear; }
 
@@ -296,10 +321,10 @@
 
     <div class="dashboard">
         <header class="header">
-            <div class="logo">BEATSTREET <span style="color:var(--primary-cyan)">FIXED SCAN</span></div>
+            <div class="logo">BEATSTREET <span style="color:var(--primary-cyan)">PROXY V3</span></div>
             <div class="status-bar">
                 <div class="status-item"><div class="status-dot"></div> ONLINE</div>
-                <div class="status-item"><div class="status-dot" style="background:#00ff00"></div> ⚡ PROXY V2</div>
+                <div class="status-item"><div class="status-dot" style="background:#00ff00"></div> DIRECT/PROXY</div>
             </div>
         </header>
 
@@ -395,8 +420,19 @@
     <!-- SCANNER OVERLAY -->
     <div class="overlay" id="scannerOverlay">
         <div class="overlay-box">
-            <h2 style="font-family:'Orbitron'; color:var(--primary-cyan);">RECURSIVE CRAWLER (FIXED)</h2>
-            <input type="text" class="cyber-input" id="scanInput" value="http://hoj-clan.fr/Music/Skid%20Row/" style="margin-top:20px;">
+            <h2 style="font-family:'Orbitron'; color:var(--primary-cyan);">RECURSIVE CRAWLER V3</h2>
+            <input type="text" class="cyber-input" id="scanInput" value="https://icekolkut.website/music2709/ice%20cube%20-19%20albums-320kbps/" style="margin-top:20px;">
+            
+            <!-- Mode Direct Toggle -->
+            <label class="toggle-wrapper">
+                <input type="checkbox" class="toggle-checkbox" id="directModeCheck">
+                <div class="toggle-slider"></div>
+                <div style="text-align:left;">
+                    <strong>DIRECT MODE (No Proxy)</strong><br>
+                    <small style="color:#666">Use with CORS Extension. Bypasses Cloudflare.</small>
+                </div>
+            </label>
+
             <div class="scan-log" id="scanLog">> System ready...</div>
             <div style="margin-top:15px;">
                 <button class="cyber-btn" id="startScanBtn" style="background:rgba(0,255,0,0.1); border-color:#0f0; color:#0f0;">START CRAWL</button>
@@ -672,74 +708,90 @@
         }
         function extractYTId(url) { const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i; const match = url.match(reg); return match ? match[1] : null; }
 
-        // --- FIXED SCANNER LOGIC ---
+        // --- ADVANCED SCANNER LOGIC (V3) ---
         window.openScanner = () => document.getElementById('scannerOverlay').style.display = 'flex';
         window.closeScanner = () => document.getElementById('scannerOverlay').style.display = 'none';
 
-        // Liste de proxys améliorée avec endpoints RAW directs
+        // Liste de proxys réorganisée (Codetabs en premier pour les serveurs bloquant le reste)
         const SCAN_PROXIES = [
-            // AllOrigins RAW (Direct text response, no JSON wrapper)
+            (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`, // AWS IP, robuste
+            (u) => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(u)}`, // Bon fallback
             (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-            // CorsProxy.io (Très fiable)
-            (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-            // ThingProxy (Bon fallback)
-            (u) => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(u)}`
+            (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`
         ];
 
-        async function fetchContent(url) {
+        async function fetchContent(url, useDirect) {
             const log = document.getElementById('scanLog');
             
+            // 1. Tentative DIRECT (Mode Hack)
+            if (useDirect) {
+                try {
+                    log.innerHTML += `<div class="info">Trying DIRECT request (Requires CORS Extension)...</div>`;
+                    log.scrollTop = log.scrollHeight;
+                    const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+                    if (response.ok) {
+                        const text = await response.text();
+                        if(text.length > 200 && (text.includes('<html') || text.includes('<body'))) return text;
+                        throw new Error("Direct response too small or invalid");
+                    }
+                    throw new Error(`Direct request blocked (HTTP ${response.status})`);
+                } catch (err) {
+                    log.innerHTML += `<div class="error">Direct Mode Failed: ${err.message}</div>`;
+                    log.scrollTop = log.scrollHeight;
+                    // Si le direct échoue, on continue normalement avec les proxies
+                }
+            }
+
+            // 2. Tentative via Proxies
             for (let i = 0; i < SCAN_PROXIES.length; i++) {
                 const proxyUrl = SCAN_PROXIES[i](url);
+                const proxyName = proxyUrl.split('//')[1].split('/')[0];
                 
-                // Log visuel de la tentative
-                if(log) log.innerHTML += `<div class="warning">Trying Proxy ${i+1}/3...</div>`;
+                if(log) log.innerHTML += `<div class="warning">Trying Proxy: ${proxyName}...</div>`;
                 log.scrollTop = log.scrollHeight;
 
                 try {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+                    const timeoutId = setTimeout(() => controller.abort(), 15000); 
 
                     const response = await fetch(proxyUrl, {
                         signal: controller.signal,
-                        headers: { 'Accept': 'text/html,application/xhtml+xml' } // S'assurer d'avoir du texte
+                        headers: { 'Accept': 'text/html,application/xhtml+xml' } 
                     });
 
                     clearTimeout(timeoutId);
 
                     if (!response.ok) {
+                        if(response.status === 403) {
+                            throw new Error(`CLOUDFLARE/BLOCK (403) - Proxy blacklisted.`);
+                        }
                         throw new Error(`HTTP ${response.status}`);
                     }
 
                     const text = await response.text();
 
-                    // Vérifier si on a reçu du contenu HTML réel et non une page d'erreur du proxy
-                    if (text.length < 200) {
-                        throw new Error("Empty response (likely blocked)");
-                    }
-                    
-                    // Vérifier si c'est du HTML
-                    if (!text.includes('<html') && !text.includes('<HTML') && !text.includes('<body')) {
-                         throw new Error("Response is not HTML");
-                    }
+                    if (text.length < 200) throw new Error("Empty response");
+                    if (!text.includes('<html') && !text.includes('<HTML') && !text.includes('<body')) throw new Error("Not HTML");
 
                     return text; // Succès
 
                 } catch (err) {
                     console.warn(`Proxy ${i+1} failed:`, err);
-                    if(log) log.innerHTML += `<div class="error">Proxy ${i+1} Failed: ${err.message}</div>`;
+                    if(log) log.innerHTML += `<div class="error">Failed: ${err.message}</div>`;
                     log.scrollTop = log.scrollHeight;
-                    continue; // Essayer le proxy suivant
+                    continue;
                 }
             }
             
-            throw new Error("All proxies blocked or server is refusing connections.");
+            throw new Error("All methods failed. Target likely blocks proxies.");
         }
 
         let isScanning = false;
         document.getElementById('startScanBtn').onclick = async () => {
             const startUrl = document.getElementById('scanInput').value.trim();
             if(!startUrl) return;
+
+            const isDirect = document.getElementById('directModeCheck').checked;
 
             isScanning = true;
             document.getElementById('startScanBtn').style.display = 'none';
@@ -757,15 +809,14 @@
             };
 
             try {
-                // Normaliser l'URL (ajouter / à la fin si c'est un dossier)
                 let baseUrlObj = new URL(startUrl);
-                if (!baseUrlObj.pathname.endsWith('/')) {
-                    baseUrlObj.pathname += '/';
-                }
+                if (!baseUrlObj.pathname.endsWith('/')) baseUrlObj.pathname += '/';
                 const baseUrl = baseUrlObj.href;
                 const basePath = baseUrlObj.pathname;
 
                 l(`Starting Scan: ${baseUrl}`);
+                l(`Mode: ${isDirect ? 'DIRECT (Extension Required)' : 'PROXY ROTATION'}`);
+                
                 const queue = [{ url: baseUrl, depth: 0 }];
                 const visited = new Set();
                 const maxDepth = 10;
@@ -777,7 +828,6 @@
                     visited.add(url);
 
                     const currentUrlObj = new URL(url);
-                    // Sécurité: ne pas sortir de la racine du scan
                     if (!currentUrlObj.pathname.startsWith(basePath)) {
                         l(`Skipped (Outside root): ${url}`, 'warning');
                         continue;
@@ -787,41 +837,34 @@
                     l(`Scanning: ${relativePath || '/'} (Depth: ${depth})`);
 
                     try {
-                        const html = await fetchContent(url);
+                        const html = await fetchContent(url, isDirect);
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(html, 'text/html');
                         const links = Array.from(doc.querySelectorAll('a[href]'));
 
                         links.forEach(link => {
                             const href = link.getAttribute('href');
-                            // Filtrage strict
                             if(!href || href.startsWith('#') || href.includes('?')) return;
-                            if(href === '../' || href.startsWith('../')) return; // Ignore Parent Directory
+                            if(href === '../' || href.startsWith('../')) return; 
                             if(href.startsWith('mailto:') || href.startsWith('javascript:')) return;
 
                             try {
                                 const resolvedUrl = new URL(href, url).href;
                                 const resolvedUrlObj = new URL(resolvedUrl);
-                                
-                                if(resolvedUrlObj.origin !== baseUrlObj.origin) return; // Domaine externe
-                                if(!resolvedUrlObj.pathname.startsWith(basePath)) return; // Hors racine
+                                if(resolvedUrlObj.origin !== baseUrlObj.origin) return;
+                                if(!resolvedUrlObj.pathname.startsWith(basePath)) return;
 
                                 if(resolvedUrl.endsWith('/')) {
-                                    // C'est un dossier
-                                    if(depth < maxDepth && !visited.has(resolvedUrl)) {
-                                        queue.push({ url: resolvedUrl, depth: depth + 1 });
-                                    }
+                                    if(depth < maxDepth && !visited.has(resolvedUrl)) queue.push({ url: resolvedUrl, depth: depth + 1 });
                                 } else if(resolvedUrl.toLowerCase().endsWith('.mp3')) {
-                                    // C'est un fichier MP3
                                     const name = resolvedUrl.split('/').pop();
                                     const path = resolvedUrlObj.pathname.substring(basePath.length).replace(name,'');
                                     addToPlaylist(resolvedUrl, name, 'audio', path);
                                     l(`  + FOUND: ${name}`, 'found');
                                 }
-                            } catch(e) { /* Erreur d'URL ignorée */ }
+                            } catch(e) { }
                         });
                         
-                        // Petit délai pour ne pas saturer le proxy
                         await new Promise(r => setTimeout(r, 200)); 
 
                     } catch(e) {
@@ -876,7 +919,9 @@
             isSelectAll = true; renderPlaylist(); startDownloadProcess(false);
         };
 
-        window.addEventListener('DOMContentLoaded', () => { showNotification("Scanner Fixed. Using RAW Proxies.", "success"); });
+        window.addEventListener('DOMContentLoaded', () => { 
+            showNotification("Proxy V3 loaded. Use Direct Mode + Extension for best results.", "info"); 
+        });
     </script>
 </body>
 </html>
