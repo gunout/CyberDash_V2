@@ -14,6 +14,8 @@
 
 **Scannez, écoutez et archivez des bibliothèques MP3 entières depuis une seule page HTML.**
 
+### 🚀 [**Essayer la démo live →**](https://gunout.github.io/CyberDash_V2/)
+
 [✨ Fonctionnalités](#-fonctionnalités) · [🚀 Installation](#-installation) · [📖 Utilisation](#-utilisation) · [🛠️ Stack](#️-stack-technique) · [🔐 Sécurité](#-sécurité) · [🤝 Contribution](#-contribution)
 
 </div>
@@ -23,6 +25,7 @@
 ## 📋 Table des matières
 
 - [Présentation](#-présentation)
+- [Démo live](#-démo-live)
 - [Fonctionnalités](#-fonctionnalités)
 - [Aperçu](#-aperçu)
 - [Installation](#-installation)
@@ -40,7 +43,7 @@
 
 ## 🎯 Présentation
 
-**CYBERDASH V2** est un dashboard web **single-page** au style cyberpunk qui permet d'explorer récursivement une arborescence web, de détecter les fichiers `.mp3`, de les lire en streaming et de les télécharger en une archive ZIP — le tout **sans backend**, **sans clé API**, et **sans installation**.
+**CYBERDASH V2** *(interface : « BEATSTREET SECURE EDITION »)* est un dashboard web **single-page** au style cyberpunk qui permet d'explorer récursivement une arborescence web, de détecter les fichiers `.mp3`, de les lire en streaming et de les télécharger en une archive ZIP — le tout **sans backend**, **sans clé API**, et **sans installation**.
 
 Il combine :
 
@@ -49,6 +52,16 @@ Il combine :
 - 📦 **Un générateur ZIP côté client** propulsé par un Web Worker (JSZip)
 - 🎨 **Une UI cyberpunk** immersive (néons cyan, scanlines, particules animées)
 - 🔐 **Sécurité renforcée** (protection XSS, CSP, validation d'URL)
+
+---
+
+## 🚀 Démo live
+
+> **Aucune installation requise** — teste directement dans ton navigateur :
+
+### 👉 **[https://gunout.github.io/CyberDash_V2/](https://gunout.github.io/CyberDash_V2/)**
+
+Fonctionne immédiatement. Pour le **Direct Mode** (bypass CORS), installe une extension navigateur — voir [Installation](#-installation).
 
 ---
 
@@ -83,7 +96,7 @@ Il combine :
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  CYBERDASH V2                       ● ONLINE  ● SAFE MODE       │
+│  BEATSTREET SECURE EDITION          ● ONLINE  ● SAFE MODE       │
 ├──────────────┬────────────────────────────┬──────────────────────┤
 │ DATA STREAM  │  [URL input]   [LOAD]      │  CONTROLS            │
 │ [12/48]      │  ┌──────────────────────┐  │  [DEEP SCAN]         │
@@ -102,14 +115,13 @@ Il combine :
 
 ## 🚀 Installation
 
-### Prérequis
+### Option 1 — Utilisation directe (recommandé)
 
-- Un **navigateur moderne** : Chrome / Edge / Firefox / Safari (dernières versions)
-- *(Optionnel)* Une extension de désactivation CORS pour le **Direct Mode** :
-  - **Chrome / Edge** : [Allow CORS](https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf)
-  - **Firefox** : [CORS Everywhere](https://addons.mozilla.org/firefox/addon/cors-everywhere/)
+Ouvre simplement la démo live :
 
-### Lancement
+### 👉 **[https://gunout.github.io/CyberDash_V2/](https://gunout.github.io/CyberDash_V2/)**
+
+### Option 2 — En local
 
 ```bash
 # 1. Clone le dépôt
@@ -121,6 +133,13 @@ open index.html      # macOS
 start index.html     # Windows
 xdg-open index.html  # Linux
 ```
+
+### Prérequis
+
+- Un **navigateur moderne** : Chrome / Edge / Firefox / Safari (dernières versions)
+- *(Optionnel)* Une extension de désactivation CORS pour le **Direct Mode** :
+  - **Chrome / Edge** : [Allow CORS](https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf)
+  - **Firefox** : [CORS Everywhere](https://addons.mozilla.org/firefox/addon/cors-everywhere/)
 
 **Aucune dépendance à installer. Aucun serveur à lancer.** 🎉
 
@@ -177,6 +196,7 @@ Colle une URL YouTube ou un lien direct `.mp3` dans le champ en haut, puis cliqu
 | **Réseau** | Fetch API + AbortController + retry/backoff |
 | **Stockage** | localStorage |
 | **Sécurité** | CSP meta + DOM API strict (no innerHTML user-content) |
+| **Hébergement** | GitHub Pages |
 | **Backend** | **Aucun** ✅ |
 
 ---
@@ -244,6 +264,7 @@ Colle une URL YouTube ou un lien direct `.mp3` dans le champ en haut, puis cliqu
 - [x] Fix XSS + CSP
 - [x] Filtre playlist + localStorage
 - [x] Raccourcis clavier
+- [x] Déploiement GitHub Pages
 - [ ] Export de la playlist en JSON / CSV
 - [ ] Support `.m4a`, `.flac`, `.wav`
 - [ ] Mode sombre / clair
@@ -295,23 +316,9 @@ Distribué sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus d'
 
 - GitHub : [@gunout](https://github.com/gunout)
 - Projet : [CyberDash_V2](https://github.com/gunout/CyberDash_V2)
+- 🌐 Démo live : [gunout.github.io/CyberDash_V2](https://gunout.github.io/CyberDash_V2/)
 
 ---
-
-<div align="center">
-
-### ⭐ Si ce projet t'a aidé, n'oublie pas de lui mettre une étoile !
-
-**🇷🇪 Fait avec ❤️ pour La Réunion 🇷🇪**
-
-**© 2026 Gunout — Tous droits réservés**
-
-*Fait avec ❤️ et beaucoup de ☕*
-
-</div>
-
----
-
 
 <div align="center">
 
