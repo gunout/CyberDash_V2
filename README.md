@@ -1,8 +1,8 @@
 <div align="center">
 
-# 🎧 BEATSTREET CYBERDASH
+# 🎧 CYBERDASH V2
 
-### Dashboard cyberpunk d'exploration, lecture et téléchargement d'archives MP3
+### HTTP & YouTube Player — Dashboard cyberpunk par Gleaphe
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)](https://developer.mozilla.org/docs/Web/HTML)
@@ -10,7 +10,7 @@
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/docs/Web/JavaScript)
 [![JSZip](https://img.shields.io/badge/JSZip-3.10.1-00ffff)](https://stuk.github.io/jszip/)
 [![No Backend](https://img.shields.io/badge/backend-none-00ff66)](#)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#-contribution)
+[![Made in Réunion](https://img.shields.io/badge/made%20in-La%20R%C3%A9union%20%F0%9F%87%B7%F0%9F%87%AA-ff69b4)](#)
 
 **Scannez, écoutez et archivez des bibliothèques MP3 entières depuis une seule page HTML.**
 
@@ -40,7 +40,7 @@
 
 ## 🎯 Présentation
 
-**BEATSTREET CYBERDASH** est un dashboard web **single-page** au style cyberpunk qui permet d'explorer récursivement une arborescence web, de détecter les fichiers `.mp3`, de les lire en streaming et de les télécharger en une archive ZIP — le tout **sans backend**, **sans clé API**, et **sans installation**.
+**CYBERDASH V2** est un dashboard web **single-page** au style cyberpunk qui permet d'explorer récursivement une arborescence web, de détecter les fichiers `.mp3`, de les lire en streaming et de les télécharger en une archive ZIP — le tout **sans backend**, **sans clé API**, et **sans installation**.
 
 Il combine :
 
@@ -83,7 +83,7 @@ Il combine :
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  BEATSTREET SECURE EDITION          ● ONLINE  ● SAFE MODE       │
+│  CYBERDASH V2                       ● ONLINE  ● SAFE MODE       │
 ├──────────────┬────────────────────────────┬──────────────────────┤
 │ DATA STREAM  │  [URL input]   [LOAD]      │  CONTROLS            │
 │ [12/48]      │  ┌──────────────────────┐  │  [DEEP SCAN]         │
@@ -113,8 +113,8 @@ Il combine :
 
 ```bash
 # 1. Clone le dépôt
-git clone https://github.com/gunout/Beatstreet-Cyberdash.git
-cd Beatstreet-Cyberdash
+git clone https://github.com/gunout/CyberDash_V2.git
+cd CyberDash_V2
 
 # 2. Ouvre simplement le fichier HTML
 open index.html      # macOS
@@ -140,7 +140,7 @@ Colle une URL YouTube ou un lien direct `.mp3` dans le champ en haut, puis cliqu
 1. Clique sur **DEEP SCAN** (panneau de droite)
 2. Colle l'URL de base à explorer, ex :
    ```
-   https://icekolkut.website/music2709/ice%20cube%20-19%20albums-320kbps/
+   https://example.com/music/albums/
    ```
 3. Choisis tes options :
    - **Custom Proxy URL** — si tu as un proxy privé
@@ -294,13 +294,15 @@ Distribué sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus d'
 **Gleaphe** — *Gunout*
 
 - GitHub : [@gunout](https://github.com/gunout)
-- Projet : [Beatstreet-Cyberdash](https://github.com/gunout/Beatstreet-Cyberdash)
+- Projet : [CyberDash_V2](https://github.com/gunout/CyberDash_V2)
 
 ---
 
 <div align="center">
 
 ### ⭐ Si ce projet t'a aidé, n'oublie pas de lui mettre une étoile !
+
+**🇷🇪 Fait avec ❤️ pour La Réunion 🇷🇪**
 
 **© 2026 Gunout — Tous droits réservés**
 
