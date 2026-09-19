@@ -308,4 +308,19 @@ Distribué sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus d'
 
 </div>
 
+---
+
+
+<div align="center">
+
+**🇷🇪 Fait avec ❤️ pour La Réunion 🇷🇪**
+
+[⬆ Retour en haut](#-reunion-monitor--dashboard-des-travaux-numériques-réunion)
+
+### Gunout · 2026
+
+© 2026 **Gunout** — Tous droits réservés.
+
+</div>
+
 
